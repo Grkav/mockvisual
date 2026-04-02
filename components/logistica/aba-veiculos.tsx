@@ -950,12 +950,14 @@ function ModalMapaVeiculoInner({ veiculo, onClose }: { veiculo: Veiculo; onClose
     () =>
       pedidosDaTarefa.reduce(
         (acc, pedido) => {
+          acc.volumes += pedido.qtdVolumes;
+          acc.volumesTotal += pedido.qtdVolumesTotal;
           acc.peso += pedido.peso;
           acc.cubagem += pedido.cubagem;
           acc.valor += pedido.valorTotal;
           return acc;
         },
-        { peso: 0, cubagem: 0, valor: 0 }
+        { volumes: 0, volumesTotal: 0, peso: 0, cubagem: 0, valor: 0 }
       ),
     [pedidosDaTarefa]
   );
@@ -1058,7 +1060,8 @@ function ModalMapaVeiculoInner({ veiculo, onClose }: { veiculo: Veiculo; onClose
                     ))}
                     {pedidosDaTarefa.length > 0 ? (
                       <TotalRow>
-                        <td colSpan={5} className="px-3 py-2 text-[10px] text-gray-500 uppercase">Total</td>
+                        <td colSpan={4} className="px-3 py-2 text-[10px] text-gray-500 uppercase">Total</td>
+                        <td className="px-3 py-2 text-[11px] text-center">{`${totaisPedidos.volumes}/${totaisPedidos.volumesTotal}`}</td>
                         <td className="px-3 py-2 text-[11px]">{fmt(totaisPedidos.peso, "peso")}</td>
                         <td className="px-3 py-2 text-[11px]">{fmt(totaisPedidos.cubagem, "cubagem")}</td>
                         <td className="px-3 py-2 text-[11px]">{fmt(totaisPedidos.valor, "moeda")}</td>
