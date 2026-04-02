@@ -7,7 +7,7 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'TransLog — Acompanhamento Logístico',
+  title: 'TMS — Acompanhamento Logístico',
   description: 'Sistema operacional de acompanhamento logístico em tempo real',
   generator: 'v0.app',
   icons: {
