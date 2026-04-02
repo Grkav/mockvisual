@@ -2,10 +2,9 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
-import { ChevronRight, ChevronDown, Download, X, CameraOff, Package, Warehouse, AlertTriangle } from "lucide-react";
+import { ChevronRight, ChevronDown, Download, X, CameraOff, Truck, Package, Warehouse, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ModalComprovante } from "@/components/logistica/modal-comprovante";
-import truckIcon from "@/styles/assets/truck icon 1.png";
 import type { Veiculo, Pedido, StatusPedido, Tarefa } from "@/lib/mock-data";
 import { TAREFAS, isPedidoParcialmenteEmbarcado } from "@/lib/mock-data";
 import {
@@ -304,6 +303,51 @@ function LinhaPedidoVeiculo({
   );
 }
 
+function LinhaPedidoModalMapa({ pedido }: { pedido: Pedido }) {
+  const [expandido, setExpandido] = useState(false);
+  const ressalvaSemFoto = Boolean(
+    pedido.tipoRessalva &&
+    (pedido.ressalvas.length === 0 || pedido.ressalvas.some((r) => !r.temFoto))
+  );
+
+  return (
+    <>
+      <tr
+        onClick={() => setExpandido(!expandido)}
+        className={`border-t border-gray-100 cursor-pointer transition-colors ${expandido ? "bg-blue-50" : "hover:bg-gray-50"}`}
+      >
+        <td className="pl-3 pr-1 py-2 w-7">
+          <button className="text-gray-400 hover:text-blue-600">
+            {expandido ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+          </button>
+        </td>
+        <td className="px-3 py-2 text-blue-700 font-semibold">{pedido.nPedido}</td>
+        <td className="px-3 py-2 text-gray-500">{pedido.nRemessa}</td>
+        <td className="px-3 py-2"><StatusBadge status={pedido.status} /></td>
+        <td className="px-3 py-2 text-center">{`${pedido.qtdVolumes}/${pedido.qtdVolumesTotal}`}</td>
+        <td className="px-3 py-2">{fmt(pedido.peso, "peso")}</td>
+        <td className="px-3 py-2">{fmt(pedido.cubagem, "cubagem")}</td>
+        <td className="px-3 py-2 font-medium">{fmt(pedido.valorTotal, "moeda")}</td>
+        <td className="px-3 py-2">
+          {pedido.tipoRessalva ? (
+            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${pedido.tipoRessalva === "No Pedido" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"}`}>
+              {pedido.tipoRessalva}
+              {ressalvaSemFoto && <CameraOff size={11} />}
+            </span>
+          ) : <span className="text-gray-300">--</span>}
+        </td>
+      </tr>
+      {expandido && (
+        <tr>
+          <td colSpan={9} className="px-4 pb-3 bg-blue-50/30">
+            <AbasPedido pedido={pedido} />
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
+
 // â”€â”€â”€ Modal Mapa Veículo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 type TipoMarkerMapa = "origem" | "veiculo" | "destino";
 
@@ -439,9 +483,28 @@ function getLocalizacaoFicticia(nome: string, veiculo: Veiculo, index: number): 
   };
 }
 
+function normalizarNomeLocal(local: string | null | undefined): string {
+  if (!local) return "";
+  const limpo = local.trim();
+  if (!limpo || limpo === "-") return "";
+  return limpo.replace(/\s*\(.*\)\s*$/, "").trim();
+}
+
+function getEnderecoAtualVeiculoMock(veiculo: Veiculo, tarefa: Tarefa | null): string {
+  const localAtual = normalizarNomeLocal(tarefa?.atual);
+  if (localAtual) return getLocalizacaoFicticia(localAtual, veiculo, 90).endereco;
+
+  const proximoCliente = normalizarNomeLocal(tarefa?.proximoCliente);
+  if (proximoCliente) return getLocalizacaoFicticia(proximoCliente, veiculo, 91).endereco;
+
+  const galpaoOperacao = GALPAO_POR_OPERACAO[veiculo.operacao] ?? "Origem da operação";
+  return getLocalizacaoFicticia(galpaoOperacao, veiculo, 92).endereco;
+}
+
 function montarTrackingMarkersMock(veiculo: Veiculo): TrackingMarkerMock[] {
   const cor = COR_OPERACAO_MOCK[veiculo.operacao] ?? "#1E3C7D";
   const tarefa = getTarefaPrioritariaDoVeiculo(veiculo);
+  const enderecoAtualVeiculo = getEnderecoAtualVeiculoMock(veiculo, tarefa);
   const origemNome =
     tarefa?.timeline.find((item) => item.tipo === "galpao")?.nome ??
     GALPAO_POR_OPERACAO[veiculo.operacao] ??
@@ -472,7 +535,7 @@ function montarTrackingMarkersMock(veiculo: Veiculo): TrackingMarkerMock[] {
       tipo: "veiculo",
       placa: veiculo.placa,
       cor,
-      endereco: `Posição atual de ${veiculo.motorista}`,
+      endereco: enderecoAtualVeiculo,
       contato: null,
       entityID: `veh-${veiculo.id}`,
       opId: veiculo.operacao,
@@ -574,7 +637,7 @@ function escolherZoom(points: Array<{ lat: number; lng: number }>, width: number
 
 function IconeMarcadorLocalizacao({ marker }: { marker: TrackingMarkerMock | MarkerPixel }) {
   const { tipo } = marker;
-  const IconeInterno = tipo === "origem" ? Warehouse : Package;
+  const IconeInterno = tipo === "veiculo" ? Truck : tipo === "origem" ? Warehouse : Package;
   const classeBase = "h-8 w-8 rounded-full border-2 border-white shadow-md flex items-center justify-center";
   const destinoEntregue = tipo === "destino" && marker.entregue === "green";
   const classeCor = tipo === "veiculo"
@@ -587,18 +650,9 @@ function IconeMarcadorLocalizacao({ marker }: { marker: TrackingMarkerMock | Mar
 
   return (
     <div className="relative">
-      {tipo === "veiculo" ? (
-        <img
-          src={truckIcon.src}
-          alt="Veículo"
-          className="h-9 w-9 object-contain drop-shadow-md"
-          draggable={false}
-        />
-      ) : (
-        <div className={`${classeBase} ${classeCor}`}>
-          <IconeInterno size={16} className="text-white" strokeWidth={2.3} />
-        </div>
-      )}
+      <div className={`${classeBase} ${classeCor}`}>
+        <IconeInterno size={16} className="text-white" strokeWidth={2.3} />
+      </div>
       {tipo === "destino" && marker.comRessalva && (
         <div
           className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border border-white bg-orange-500 shadow"
@@ -886,6 +940,7 @@ function ModalMapaVeiculoInner({ veiculo, onClose }: { veiculo: Veiculo; onClose
   const tarefaAtual = useMemo(() => getTarefaPrioritariaDoVeiculo(veiculo), [veiculo]);
   const trackingMarkers = useMemo(() => montarTrackingMarkersMock(veiculo), [veiculo]);
   const origem = trackingMarkers.find((marker) => marker.tipo === "origem");
+  const posicaoVeiculo = trackingMarkers.find((marker) => marker.tipo === "veiculo");
   const destinos = trackingMarkers.filter((marker) => marker.tipo === "destino");
   const pedidosDaTarefa = useMemo(() => {
     if (!tarefaAtual) return veiculo.pedidos;
@@ -927,6 +982,11 @@ function ModalMapaVeiculoInner({ veiculo, onClose }: { veiculo: Veiculo; onClose
             <span className="rounded bg-slate-50 border border-slate-200 px-2 py-1 text-slate-700">
               Posição atual: {veiculo.lat.toFixed(6)}, {veiculo.lng.toFixed(6)}
             </span>
+            {posicaoVeiculo?.endereco && (
+              <span className="rounded bg-slate-50 border border-slate-200 px-2 py-1 text-slate-700">
+                Endereço atual: {posicaoVeiculo.endereco}
+              </span>
+            )}
             {origem && (
               <span className="rounded bg-indigo-50 border border-indigo-200 px-2 py-1 text-indigo-700">
                 Origem: {origem.nome}
@@ -973,7 +1033,7 @@ function ModalMapaVeiculoInner({ veiculo, onClose }: { veiculo: Veiculo; onClose
             </div>
           </div>
 
-          <div className="px-4 pb-2">
+          <div className="pb-2">
             <div className="border border-blue-200 rounded-md overflow-hidden">
               <div className="bg-blue-700/10 px-3 py-1.5 border-b border-blue-200">
                 <div className="flex items-center justify-between gap-2">
@@ -982,31 +1042,31 @@ function ModalMapaVeiculoInner({ veiculo, onClose }: { veiculo: Veiculo; onClose
                   </span>
                 </div>
               </div>
-              <div className="overflow-x-auto">
+              <div className="overflow-y-auto">
                 <table className="w-full text-[11px]">
-                  <thead className="bg-blue-50">
+                  <thead className="bg-gray-50 sticky top-0">
                     <tr>
                       <th className="w-7" />
-                      {["Operação","Nº Pedido","Remessa","Cliente","Rota","Tipo Serv.","Dt. Agend.","Vol. Emb.","Peso","Cubagem","Valor Total","Status","Prior.","Comprovante","Ressalva"].map((h) => (
-                        <th key={h} className="px-2 py-1.5 text-left text-[10px] font-semibold text-blue-800 uppercase whitespace-nowrap">{h}</th>
+                      {["Nº Pedido", "Remessa", "Status", "Vol.", "Peso", "Cubagem", "Valor", "Ressalva"].map((h) => (
+                        <th key={h} className="px-3 py-2 text-left text-[10px] font-semibold text-gray-600 uppercase">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody className="bg-white">
                     {pedidosDaTarefa.map((pedido) => (
-                      <LinhaPedidoVeiculo key={pedido.id} pedido={pedido} filtroStatus={[]} compact />
+                      <LinhaPedidoModalMapa key={pedido.id} pedido={pedido} />
                     ))}
                     {pedidosDaTarefa.length > 0 ? (
                       <TotalRow>
-                        <td colSpan={9} className="px-3 py-1.5 text-[10px] text-gray-500 uppercase">Total</td>
-                        <td className="px-2 py-1.5 text-[11px] ">{fmt(totaisPedidos.peso, "peso")}</td>
-                        <td className="px-2 py-1.5 text-[11px] ">{fmt(totaisPedidos.cubagem, "cubagem")}</td>
-                        <td className="px-2 py-1.5 text-[11px] ">{fmt(totaisPedidos.valor, "moeda")}</td>
-                        <td colSpan={4} />
+                        <td colSpan={5} className="px-3 py-2 text-[10px] text-gray-500 uppercase">Total</td>
+                        <td className="px-3 py-2 text-[11px]">{fmt(totaisPedidos.peso, "peso")}</td>
+                        <td className="px-3 py-2 text-[11px]">{fmt(totaisPedidos.cubagem, "cubagem")}</td>
+                        <td className="px-3 py-2 text-[11px]">{fmt(totaisPedidos.valor, "moeda")}</td>
+                        <td />
                       </TotalRow>
                     ) : (
                       <tr>
-                        <td colSpan={16} className="px-4 py-3 text-center text-xs text-gray-400">
+                        <td colSpan={9} className="px-4 py-3 text-center text-xs text-gray-400">
                           Nenhum pedido disponível para esta tarefa.
                         </td>
                       </tr>
