@@ -104,7 +104,7 @@ export default function AcompanhamentoPage() {
   });
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-gray-100">
+    <div className="flex min-h-screen flex-col bg-gray-100">
       {/* Header */}
       <Header />
       <ModuleTitle />
@@ -128,7 +128,7 @@ export default function AcompanhamentoPage() {
       <CardsStatus cards={cards} cardsAtivos={cardsAtivos} onCardClick={handleCardClick} />
 
       {/* Abas */}
-      <div className="flex-1 flex flex-col overflow-hidden bg-white">
+      <div className="flex flex-1 flex-col bg-white">
         {/* Tabs header */}
         <div className="flex items-center border-b border-gray-200 bg-gray-50 px-4">
           {abas.map((aba) => (
@@ -171,7 +171,7 @@ export default function AcompanhamentoPage() {
         </div>
 
         {/* ConteÃºdo da aba */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-visible">
           {abaAtiva === "veiculos" && (
             <AbaVeiculos veiculos={VEICULOS} filtroStatus={cardsAtivos} filtroTransportadoraGlobal={filtroTransportadora} />
           )}
