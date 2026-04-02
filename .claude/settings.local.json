@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(node:*)",
+      "Bash(npm:*)",
+      "Bash(del \"c:\\\\Users\\\\Gustavo\\\\Downloads\\\\projeto_excel\\\\components\\\\logistica\\\\painel-alertas.tsx\")"
+    ]
+  }
+}
