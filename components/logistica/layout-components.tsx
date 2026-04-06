@@ -314,6 +314,57 @@ export function SearchSelect({ placeholder, options, value, onChange, className 
   );
 }
 
+interface ActionDropdownButtonProps {
+  label: string;
+  icon?: React.ReactNode;
+  items: { label: string; icon?: React.ReactNode; action: () => void; danger?: boolean }[];
+  className?: string;
+}
+
+export function ActionDropdownButton({ label, icon, items, className = "" }: ActionDropdownButtonProps) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className={`relative ${className}`}>
+      <Button
+        size="sm"
+        variant="outline"
+        className="h-8 text-xs gap-1.5 border-blue-400 text-blue-700 hover:bg-blue-50"
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen((prev) => !prev);
+        }}
+      >
+        {icon}
+        {label}
+        <ChevronDown size={12} />
+      </Button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 z-50 mt-1 bg-white border border-gray-200 rounded shadow-lg w-full min-w-0">
+            {items.map((item, i) => (
+              <button
+                key={`${item.label}-${i}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  item.action();
+                  setOpen(false);
+                }}
+                className={`w-full text-left flex items-center gap-2 px-3 py-2 text-xs hover:bg-gray-50 ${item.danger ? "text-red-600" : "text-gray-700"}`}
+              >
+                {item.icon && <span className="shrink-0">{item.icon}</span>}
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // â”€â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export function Header() {
   return (

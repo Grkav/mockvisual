@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import { ChevronRight, ChevronDown, Download, CameraOff } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import type { Pedido, StatusPedido, Comprovante } from "@/lib/mock-data";
 import { isPedidoParcialmenteEmbarcado } from "@/lib/mock-data";
 import {
-  SearchSelect, ElipsisMenu, ColFilterTh, TotalRow, IconeComprovante,
+  SearchSelect, ElipsisMenu, ColFilterTh, TotalRow, IconeComprovante, ActionDropdownButton,
   StatusBadge, fmt, useSortable, useColFilters, calcularResultado,
   ValidacaoBadge, ResultadoBadge,
 } from "@/components/logistica/layout-components";
@@ -283,6 +282,9 @@ function LinhaPedido({ pedido, filtroStatus }: { pedido: Pedido; filtroStatus?: 
             { label: "Exportar Itens desse Pedido", icon: <Download size={12} />, action: () => alert(`Exportando itens ${pedido.nPedido}`) },
             { label: "Exportar Comprovantes desse Pedido", icon: <Download size={12} />, action: () => alert(`Exportando comprovantes ${pedido.nPedido}`) },
             { label: "Exportar Ressalvas desse Pedido", icon: <Download size={12} />, action: () => alert(`Exportando ressalvas ${pedido.nPedido}`) },
+            { label: "Inativar Pedido", action: () => alert(`Inativando pedido ${pedido.nPedido}`), danger: true },
+            { label: "Registrar entrega", action: () => alert(`Registrando entrega do pedido ${pedido.nPedido}`) },
+            { label: "Registrar Ressalva", action: () => alert(`Registrando ressalva do pedido ${pedido.nPedido}`) },
           ]} />
         </td>
       </tr>
@@ -394,15 +396,16 @@ export function AbaPedidos({ pedidos, filtroStatus, filtroPrioridade, filtroPedi
             Limpar filtros de coluna ×
           </button>
         )}
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-8 text-xs gap-1.5 border-blue-400 text-blue-700 hover:bg-blue-50 ml-auto"
-          onClick={() => alert("Exportando pedidos...")}
-        >
-          <Download size={12} />
-          Exportar Pedidos
-        </Button>
+        <ActionDropdownButton
+          label="Exportar"
+          icon={<Download size={12} />}
+          className="ml-auto"
+          items={[
+            { label: "Pedidos", icon: <Download size={12} />, action: () => alert("Exportando pedidos...") },
+            { label: "Volumes", icon: <Download size={12} />, action: () => alert("Exportando volumes...") },
+            { label: "Itens", icon: <Download size={12} />, action: () => alert("Exportando itens...") },
+          ]}
+        />
       </div>
 
       {/* Tabela */}

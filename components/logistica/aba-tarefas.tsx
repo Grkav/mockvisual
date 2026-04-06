@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import type { Tarefa, Pedido, StatusPedido, ParadaTimeline } from "@/lib/mock-data";
 import { PEDIDOS, VEICULOS, isPedidoParcialmenteEmbarcado } from "@/lib/mock-data";
 import {
-  SearchSelect, ElipsisMenu, ColFilterTh, TotalRow, IconeComprovante,
+  SearchSelect, ElipsisMenu, ColFilterTh, TotalRow, IconeComprovante, ActionDropdownButton,
   StatusBadge, fmt, useSortable, useColFilters, calcularResultado,
   ValidacaoBadge, ResultadoBadge, NaoProgramadoBadge, ThValidacao,
 } from "@/components/logistica/layout-components";
@@ -1005,37 +1005,66 @@ function ModalPedidoTarefa({ pedido, onClose }: { pedido: Pedido; onClose: () =>
 // â”€â”€â”€ Tooltip pedidos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function TooltipPedidos({ tarefa }: { tarefa: Tarefa }) {
   const [open, setOpen] = useState(false);
+  const [mostrarTodos, setMostrarTodos] = useState(false);
   const [pedidoModal, setPedidoModal] = useState<Pedido | null>(null);
+  const pedidosDaTarefa = tarefa.listaPedidos.map((nPed) => ({
+    nPed,
+    pedido: PEDIDOS.find((p) => p.nPedido === nPed) ?? null,
+  }));
+  const pedidosVisiveis = mostrarTodos ? pedidosDaTarefa : pedidosDaTarefa.slice(0, 3);
+
+  function abrirTooltip() {
+    setOpen(true);
+    setMostrarTodos(false);
+  }
+
+  function fecharTooltip() {
+    setOpen(false);
+    setMostrarTodos(false);
+  }
 
   return (
-    <div className="relative inline-block">
+    <div className="relative inline-block" onMouseEnter={abrirTooltip} onMouseLeave={fecharTooltip}>
       <button
         className="text-blue-700 font-semibold underline hover:text-blue-900 text-[11px]"
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
-        onClick={(e) => { e.stopPropagation(); setOpen(true); }}
+        onClick={(e) => { e.stopPropagation(); abrirTooltip(); }}
       >
         N° Pedidos
       </button>
       {open && (
         <>
-          <div className="absolute left-0 z-50 mt-1 bg-white border border-gray-200 rounded shadow-lg min-w-[180px]"
-               onMouseEnter={() => setOpen(true)}
-               onMouseLeave={() => setOpen(false)}>
+          <div
+            className="absolute left-0 z-50 mt-1 bg-white border border-gray-200 rounded shadow-lg w-[420px] max-w-[90vw]"
+          >
             <p className="px-3 py-1.5 text-[10px] font-semibold text-gray-500 uppercase border-b border-gray-100">Pedidos da Tarefa</p>
-            {tarefa.listaPedidos.map((nPed) => {
-              const pedido = PEDIDOS.find((p) => p.nPedido === nPed);
-              return (
+            <div className="grid grid-cols-3 gap-2 p-2">
+              {pedidosVisiveis.map(({ nPed, pedido }) => (
                 <button
                   key={nPed}
-                  onClick={(e) => { e.stopPropagation(); setPedidoModal(pedido || null); setOpen(false); }}
-                  className="w-full text-left flex items-center justify-between gap-3 px-3 py-1.5 text-xs hover:bg-blue-50 text-blue-700 border-b border-gray-50 last:border-b-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (pedido) setPedidoModal(pedido);
+                    fecharTooltip();
+                  }}
+                  className="text-left rounded border border-gray-200 px-2 py-2 text-xs hover:bg-blue-50"
                 >
-                  <span className="font-medium">{nPed}</span>
-                  {pedido && <StatusBadge status={pedido.status} />}
+                  <span className="block font-semibold text-blue-700 truncate">{nPed}</span>
                 </button>
-              );
-            })}
+              ))}
+            </div>
+            {!mostrarTodos && pedidosDaTarefa.length > 3 && (
+              <div className="px-2 pb-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMostrarTodos(true);
+                  }}
+                  className="w-full rounded border border-blue-200 bg-blue-50 px-2 py-1.5 text-[11px] font-medium text-blue-700 hover:bg-blue-100"
+                >
+                  Ver mais ({pedidosDaTarefa.length - 3})
+                </button>
+              </div>
+            )}
           </div>
         </>
       )}
@@ -1411,15 +1440,17 @@ export function AbaTarefas({ tarefas, filtroStatus, filtroOperacaoGlobal }: AbaT
             Limpar filtros de coluna ×
           </button>
         )}
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-8 text-xs gap-1.5 border-blue-400 text-blue-700 hover:bg-blue-50 ml-auto"
-          onClick={() => alert("Exportando tarefas...")}
-        >
-          <Download size={12} />
-          Exportar Tarefas
-        </Button>
+        <ActionDropdownButton
+          label="Exportar"
+          icon={<Download size={12} />}
+          className="ml-auto"
+          items={[
+            { label: "Tarefas", icon: <Download size={12} />, action: () => alert("Exportando tarefas...") },
+            { label: "Deslocamentos", icon: <Download size={12} />, action: () => alert("Exportando deslocamentos...") },
+            { label: "Pausas", icon: <Download size={12} />, action: () => alert("Exportando pausas...") },
+            { label: "Pedágios", icon: <Download size={12} />, action: () => alert("Exportando pedágios...") },
+          ]}
+        />
       </div>
 
       {/* Tabela */}

@@ -3,12 +3,11 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { ChevronRight, ChevronDown, Download, X, CameraOff, Truck, Package, Warehouse, AlertTriangle } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { ModalComprovante } from "@/components/logistica/modal-comprovante";
 import type { Veiculo, Pedido, StatusPedido, Tarefa } from "@/lib/mock-data";
 import { TAREFAS, isPedidoParcialmenteEmbarcado } from "@/lib/mock-data";
 import {
-  SearchSelect, ElipsisMenu, SortableTh, ColFilterTh, TotalRow, IconeComprovante,
+  SearchSelect, ElipsisMenu, SortableTh, ColFilterTh, TotalRow, IconeComprovante, ActionDropdownButton,
   StatusBadge, fmt, useSortable, useColFilters, calcularResultado,
   ValidacaoBadge, ResultadoBadge, NaoProgramadoBadge, ThValidacao,
 } from "@/components/logistica/layout-components";
@@ -1355,15 +1354,17 @@ export function AbaVeiculos({ veiculos, filtroStatus, filtroTransportadoraGlobal
           placeholder="Pesquisar placa..."
           className="h-8 px-2 text-xs border border-gray-300 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-400 w-40"
         />
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-8 text-xs gap-1.5 border-blue-400 text-blue-700 hover:bg-blue-50 ml-auto"
-          onClick={() => alert("Exportando veículos...")}
-        >
-          <Download size={12} />
-          Exportar Veículos
-        </Button>
+        <ActionDropdownButton
+          label="Exportar"
+          icon={<Download size={12} />}
+          className="ml-auto"
+          items={[
+            { label: "Veículos", icon: <Download size={12} />, action: () => alert("Exportando veículos...") },
+            { label: "Pedidos", icon: <Download size={12} />, action: () => alert("Exportando pedidos...") },
+            { label: "Volumes", icon: <Download size={12} />, action: () => alert("Exportando volumes...") },
+            { label: "Itens", icon: <Download size={12} />, action: () => alert("Exportando itens...") },
+          ]}
+        />
         {hasActiveFilters() && (
           <button
             onClick={clearAllFilters}
