@@ -2,7 +2,7 @@
 
 import { Fragment, useState, useRef, useEffect } from "react";
 import ReactDOM from "react-dom";
-import { ChevronRight, ChevronDown, ChevronUp, Download, X, CameraOff, MapPin, Building2, Warehouse } from "lucide-react";
+import { ChevronRight, ChevronDown, ChevronUp, Download, X, CameraOff, MapPin, Building2, Warehouse, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Tarefa, Pedido, StatusPedido, ParadaTimeline } from "@/lib/mock-data";
 import { PEDIDOS, VEICULOS, isPedidoParcialmenteEmbarcado } from "@/lib/mock-data";
@@ -162,13 +162,14 @@ function ModalPedidosParada({
             <thead className="bg-gray-50 sticky top-0">
               <tr>
                 <th className="w-7" />
-                {["Nº Pedido", "Remessa", "Status", "Vol.", "Peso", "Cubagem", "Valor", "Ressalva"].map((h) => (
+                <th className="px-3 py-2 text-left text-[10px] font-semibold text-gray-600 uppercase">#</th>
+                {["Nº Pedido", "Remessa", "Cliente", "Status", "Vol.", "Peso", "Cubagem", "Valor", "Ressalva"].map((h) => (
                   <th key={h} className="px-3 py-2 text-left text-[10px] font-semibold text-gray-600 uppercase">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {pedidosParada.map((p) => (
+              {pedidosParada.map((p, index) => (
                 <Fragment key={p.id}>
                   <tr
                     onClick={() => {
@@ -182,8 +183,10 @@ function ModalPedidosParada({
                         {pedidoExpandidoId === p.id ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
                       </button>
                     </td>
+                    <td className="px-3 py-2 text-gray-500">{index + 1}</td>
                     <td className="px-3 py-2 text-blue-700 font-semibold">{p.nPedido}</td>
                     <td className="px-3 py-2 text-gray-500">{p.nRemessa}</td>
+                    <td className="px-3 py-2">{p.cliente}</td>
                     <td className="px-3 py-2"><StatusBadge status={p.status} /></td>
                     <td className="px-3 py-2 text-center">{`${p.qtdVolumes}/${p.qtdVolumesTotal}`}</td>
                     <td className="px-3 py-2">{fmt(p.peso, "peso")}</td>
@@ -209,7 +212,7 @@ function ModalPedidosParada({
                   </tr>
                   {pedidoExpandidoId === p.id && (
                     <tr>
-                      <td colSpan={9} className="px-5 pb-3 bg-blue-50/30">
+                      <td colSpan={11} className="px-5 pb-3 bg-blue-50/30">
                         <div className="border border-blue-200 rounded-md bg-white">
                           <div className="flex border-b border-blue-200 bg-blue-50">
                             {(["volumes", "itens", "comprovantes", "ressalvas"] as const).map((a) => (
@@ -228,14 +231,16 @@ function ModalPedidosParada({
                             <table className="w-full text-[11px]">
                               <thead className="bg-gray-50">
                                 <tr>
+                                  <th className="px-3 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">#</th>
                                   {["Nº Volume", "Tarefa/Retirada", "Hr Embarque", "Hr Desembarque", "Hr Entrega", "Rota"].map((h) => (
                                     <th key={h} className="px-3 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">{h}</th>
                                   ))}
                                 </tr>
                               </thead>
                               <tbody>
-                                {p.volumes.map((v) => (
+                                {p.volumes.map((v, idxVolume) => (
                                   <tr key={v.id} className="border-t border-gray-100">
+                                    <td className="px-3 py-1.5 text-gray-500">{idxVolume + 1}</td>
                                     <td className="px-3 py-1.5 font-mono text-[10px]">{v.nVolume}</td>
                                     <td className="px-3 py-1.5">{v.tarefaRetirada}</td>
                                     <td className="px-3 py-1.5">{v.horaEmbarque || "--"}</td>
@@ -284,14 +289,16 @@ function ModalPedidosParada({
                               <table className="w-full text-[11px]">
                                 <thead className="bg-gray-50">
                                   <tr>
+                                    <th className="px-3 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">#</th>
                                     {["Tipo", "Descrição", "Data/Hora", "Usuário", "Status", "FOTO"].map((h) => (
                                       <th key={h} className="px-3 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">{h}</th>
                                     ))}
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  {p.ressalvas.map((r) => (
+                                  {p.ressalvas.map((r, idxRessalva) => (
                                     <tr key={r.id} className="border-t border-gray-100">
+                                      <td className="px-3 py-1.5 text-gray-500">{idxRessalva + 1}</td>
                                       <td className="px-3 py-1.5">{r.tipo}</td>
                                       <td className="px-3 py-1.5">{r.descricao}</td>
                                       <td className="px-3 py-1.5">{r.dataHora}</td>
@@ -728,11 +735,20 @@ function TimelineTarefa({ tarefa }: { tarefa: Tarefa }) {
 
 // â”€â”€â”€ Deslocamento â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function DeslocamentoTarefa({ tarefa }: { tarefa: Tarefa }) {
-  if (tarefa.deslocamentos.length === 0) {
+  type CampoEditavelDeslocamento = "horarioInicial" | "horarioFinal" | "kmInicial" | "kmFinal";
+  const [deslocamentosEditados, setDeslocamentosEditados] = useState(tarefa.deslocamentos);
+  const [editando, setEditando] = useState<{ id: string; campo: CampoEditavelDeslocamento } | null>(null);
+
+  useEffect(() => {
+    setDeslocamentosEditados(tarefa.deslocamentos);
+    setEditando(null);
+  }, [tarefa.id, tarefa.deslocamentos]);
+
+  if (deslocamentosEditados.length === 0) {
     return <p className="py-6 text-center text-xs text-gray-400">Nenhum deslocamento registrado.</p>;
   }
-  const totalInformado = tarefa.deslocamentos.reduce((s, d) => s + d.kmInformado, 0);
-  const totalEstimado = tarefa.deslocamentos.reduce((s, d) => s + d.kmEstimado, 0);
+  const totalInformado = deslocamentosEditados.reduce((s, d) => s + d.kmInformado, 0);
+  const totalEstimado = deslocamentosEditados.reduce((s, d) => s + d.kmEstimado, 0);
   const totalDif = totalInformado - totalEstimado;
 
   function difClass(dif: number) {
@@ -741,28 +757,82 @@ function DeslocamentoTarefa({ tarefa }: { tarefa: Tarefa }) {
     return "text-red-700 bg-red-50";
   }
 
+  function salvarEdicao(id: string, campo: CampoEditavelDeslocamento, valorRaw: string) {
+    setDeslocamentosEditados((prev) =>
+      prev.map((d) => {
+        if (d.id !== id) return d;
+        if (campo === "kmInicial" || campo === "kmFinal") {
+          const valorNumerico = Number(valorRaw.replace(",", "."));
+          if (Number.isNaN(valorNumerico)) return d;
+          return { ...d, [campo]: valorNumerico };
+        }
+        return { ...d, [campo]: valorRaw };
+      })
+    );
+    setEditando(null);
+  }
+
+  function renderCampoEditavel(
+    d: Tarefa["deslocamentos"][number],
+    campo: CampoEditavelDeslocamento,
+    valorExibicao: string,
+    inputType: "text" | "number" = "text"
+  ) {
+    const emEdicao = editando?.id === d.id && editando?.campo === campo;
+    if (emEdicao) {
+      return (
+        <input
+          autoFocus
+          type={inputType}
+          defaultValue={String(d[campo] ?? "")}
+          className="h-6 w-full min-w-[90px] rounded border border-blue-300 px-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-blue-400"
+          onBlur={(e) => salvarEdicao(d.id, campo, e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") salvarEdicao(d.id, campo, (e.target as HTMLInputElement).value);
+            if (e.key === "Escape") setEditando(null);
+          }}
+        />
+      );
+    }
+    return (
+      <div className="inline-flex items-center gap-1">
+        <span onDoubleClick={() => setEditando({ id: d.id, campo })}>{valorExibicao}</span>
+        <button
+          type="button"
+          className="text-gray-400 hover:text-blue-600"
+          onClick={() => setEditando({ id: d.id, campo })}
+          title="Editar"
+        >
+          <Pencil size={10} />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-[11px]">
         <thead className="bg-gray-50">
           <tr>
+            <th className="px-2 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase whitespace-nowrap">#</th>
             {["Ordem","Origem","Destino","Hr. Inicial","Hr. Final","KM Inicial","KM Final","KM Informado","KM Estimado","Diferença KM","Status"].map((h) => (
               <th key={h} className="px-2 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase whitespace-nowrap">{h}</th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {tarefa.deslocamentos.map((d) => {
+          {deslocamentosEditados.map((d, index) => {
             const dif = d.kmInformado > 0 ? d.diferencaKm : 0;
             return (
               <tr key={d.id} className="border-t border-gray-100 hover:bg-gray-50">
+                <td className="px-2 py-1.5 text-gray-500">{index + 1}</td>
                 <td className="px-2 py-1.5 text-center font-medium">{d.ordem}</td>
                 <td className="px-2 py-1.5">{d.origem}</td>
                 <td className="px-2 py-1.5">{d.destino}</td>
-                <td className="px-2 py-1.5">{d.horarioInicial}</td>
-                <td className="px-2 py-1.5">{d.horarioFinal || "--"}</td>
-                <td className="px-2 py-1.5  font-mono">{d.kmInicial.toLocaleString()}</td>
-                <td className="px-2 py-1.5  font-mono">{d.kmFinal > 0 ? d.kmFinal.toLocaleString() : "--"}</td>
+                <td className="px-2 py-1.5">{renderCampoEditavel(d, "horarioInicial", d.horarioInicial || "--")}</td>
+                <td className="px-2 py-1.5">{renderCampoEditavel(d, "horarioFinal", d.horarioFinal || "--")}</td>
+                <td className="px-2 py-1.5 font-mono">{renderCampoEditavel(d, "kmInicial", d.kmInicial.toLocaleString(), "number")}</td>
+                <td className="px-2 py-1.5 font-mono">{renderCampoEditavel(d, "kmFinal", d.kmFinal > 0 ? d.kmFinal.toLocaleString() : "--", "number")}</td>
                 <td className="px-2 py-1.5  font-medium">{d.kmInformado > 0 ? `${d.kmInformado} km` : "--"}</td>
                 <td className="px-2 py-1.5  text-blue-700">{d.kmEstimado} km</td>
                 <td className="px-2 py-1.5 ">
@@ -783,7 +853,7 @@ function DeslocamentoTarefa({ tarefa }: { tarefa: Tarefa }) {
             );
           })}
           <TotalRow>
-            <td className="px-2 py-1.5 text-[10px] text-gray-500 uppercase" colSpan={7}>Total</td>
+            <td className="px-2 py-1.5 text-[10px] text-gray-500 uppercase" colSpan={8}>Total</td>
             <td className="px-2 py-1.5  text-[11px]">{totalInformado} km</td>
             <td className="px-2 py-1.5  text-[11px] text-blue-700">{totalEstimado} km</td>
             <td className="px-2 py-1.5  text-[11px]">
@@ -808,14 +878,16 @@ function PausaTarefa({ tarefa }: { tarefa: Tarefa }) {
     <table className="w-full text-[11px]">
       <thead className="bg-gray-50">
         <tr>
+          <th className="px-3 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">#</th>
           {["Motivo","Observação","Início","Fim"].map((h) => (
             <th key={h} className="px-3 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">{h}</th>
           ))}
         </tr>
       </thead>
       <tbody>
-        {tarefa.pausas.map((p) => (
+        {tarefa.pausas.map((p, index) => (
           <tr key={p.id} className="border-t border-gray-100 hover:bg-gray-50">
+            <td className="px-3 py-1.5 text-gray-500">{index + 1}</td>
             <td className="px-3 py-1.5">{p.motivo}</td>
             <td className="px-3 py-1.5 text-gray-500">{p.observacao}</td>
             <td className="px-3 py-1.5">{p.inicio}</td>
@@ -837,14 +909,16 @@ function PedagioTarefa({ tarefa }: { tarefa: Tarefa }) {
     <table className="w-full text-[11px]">
       <thead className="bg-gray-50">
         <tr>
+          <th className="px-3 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">#</th>
           {["Concessionária","Endereço","Data/Hora","Valor"].map((h) => (
             <th key={h} className="px-3 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">{h}</th>
           ))}
         </tr>
       </thead>
       <tbody>
-        {tarefa.pedagios.map((p) => (
+        {tarefa.pedagios.map((p, index) => (
           <tr key={p.id} className="border-t border-gray-100 hover:bg-gray-50">
+            <td className="px-3 py-1.5 text-gray-500">{index + 1}</td>
             <td className="px-3 py-1.5">{p.concessionaria}</td>
             <td className="px-3 py-1.5">{p.endereco}</td>
             <td className="px-3 py-1.5">{p.dataHora}</td>
@@ -852,7 +926,7 @@ function PedagioTarefa({ tarefa }: { tarefa: Tarefa }) {
           </tr>
         ))}
         <TotalRow>
-          <td className="px-3 py-1.5 text-[10px] text-gray-500 uppercase" colSpan={3}>Total</td>
+          <td className="px-3 py-1.5 text-[10px] text-gray-500 uppercase" colSpan={4}>Total</td>
           <td className="px-3 py-1.5  text-[11px]">{fmt(total, "moeda")}</td>
         </TotalRow>
       </tbody>
@@ -862,7 +936,7 @@ function PedagioTarefa({ tarefa }: { tarefa: Tarefa }) {
 
 // â”€â”€â”€ Modal Pedido vindo de tooltip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function ModalPedidoTarefa({ pedido, onClose }: { pedido: Pedido; onClose: () => void }) {
-  const [aba, setAba] = useState<"itens" | "comprovantes" | "ressalvas">("itens");
+  const [aba, setAba] = useState<"volumes" | "itens" | "comprovantes" | "ressalvas">("volumes");
   const [modalComp, setModalComp] = useState<{ comprovantes: Pedido["comprovantes"]; indice: number } | null>(null);
   const comprovanteRessalva = (r: Pedido["ressalvas"][number]): Pedido["comprovantes"] => [
     {
@@ -905,36 +979,10 @@ function ModalPedidoTarefa({ pedido, onClose }: { pedido: Pedido; onClose: () =>
               </div>
             ))}
           </div>
-          {/* Volumes */}
-          <div className="mb-3">
-            <h3 className="text-xs font-semibold text-gray-700 mb-1.5 uppercase">Volumes</h3>
-            <table className="w-full text-[11px] border border-gray-200 rounded">
-              <thead className="bg-gray-50">
-                <tr>
-                  {["Nº Volume","Índice","Hr Embarque","Hr Desembarque","Hr Entrega","Tarefa/Retirada"].map((h) => (
-                    <th key={h} className="px-2 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {pedido.volumes.map((v) => (
-                  <tr key={v.id} className="border-t border-gray-100">
-                    <td className="px-2 py-1.5 font-mono text-[10px]">{v.nVolume}</td>
-                    <td className="px-2 py-1.5">{v.tarefaRetirada}</td>
-                    <td className="px-2 py-1.5 text-center">{v.nVolume}</td>
-                    <td className="px-2 py-1.5">{v.horaEmbarque}</td>
-                    <td className="px-2 py-1.5">{v.horaDesembarque}</td>
-                    <td className="px-2 py-1.5">{v.horaEntrega}</td>
-                    <td className="px-2 py-1.5">{v.rota}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
           {/* Abas */}
           <div className="border border-gray-200 rounded">
             <div className="flex border-b border-gray-200 bg-gray-50">
-              {(["itens","comprovantes","ressalvas"] as const).map((a) => (
+              {(["volumes","itens","comprovantes","ressalvas"] as const).map((a) => (
                 <button
                   key={a}
                   onClick={() => setAba(a)}
@@ -945,6 +993,32 @@ function ModalPedidoTarefa({ pedido, onClose }: { pedido: Pedido; onClose: () =>
               ))}
             </div>
             <div className="bg-white">
+              {aba === "volumes" && (
+                <table className="w-full text-[11px]">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-2 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">#</th>
+                      {["Nº Volume","Tarefa/Retirada","Índice","Hr Embarque","Hr Desembarque","Hr Entrega","Rota"].map((h) => (
+                        <th key={h} className="px-2 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pedido.volumes.map((v, index) => (
+                      <tr key={v.id} className="border-t border-gray-100">
+                        <td className="px-2 py-1.5 text-gray-500">{index + 1}</td>
+                        <td className="px-2 py-1.5 font-mono text-[10px]">{v.nVolume}</td>
+                        <td className="px-2 py-1.5">{v.tarefaRetirada}</td>
+                        <td className="px-2 py-1.5 text-center">{v.nVolume}</td>
+                        <td className="px-2 py-1.5">{v.horaEmbarque}</td>
+                        <td className="px-2 py-1.5">{v.horaDesembarque}</td>
+                        <td className="px-2 py-1.5">{v.horaEntrega}</td>
+                        <td className="px-2 py-1.5">{v.rota}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
               {aba === "itens" && pedido.itens.map((item) => (
                 <div key={item.id} className="flex items-center gap-3 px-3 py-1.5 border-b border-gray-100 text-[11px]">
                   <span className="font-medium">{item.nomeProduto}</span>
@@ -972,14 +1046,16 @@ function ModalPedidoTarefa({ pedido, onClose }: { pedido: Pedido; onClose: () =>
                 <table className="w-full text-[11px]">
                   <thead className="bg-gray-50">
                     <tr>
+                      <th className="px-3 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">#</th>
                       {["Tipo", "Descrição", "Data/Hora", "Usuário", "Status", "FOTO"].map((h) => (
                         <th key={h} className="px-3 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {pedido.ressalvas.map((r) => (
+                    {pedido.ressalvas.map((r, index) => (
                       <tr key={r.id} className="border-t border-gray-100">
+                        <td className="px-3 py-1.5 text-gray-500">{index + 1}</td>
                         <td className="px-3 py-1.5">{r.tipo}</td>
                         <td className="px-3 py-1.5">{r.descricao}</td>
                         <td className="px-3 py-1.5">{r.dataHora}</td>
@@ -1182,7 +1258,7 @@ function ModalOrdemEntrega({
 }
 
 // â”€â”€â”€ Linha de Tarefa â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function LinhaTarefa({ tarefa, onAlterarOrdem }: { tarefa: Tarefa; onAlterarOrdem: (t: Tarefa) => void }) {
+function LinhaTarefa({ tarefa, index, onAlterarOrdem }: { tarefa: Tarefa; index: number; onAlterarOrdem: (t: Tarefa) => void }) {
   const [expandido, setExpandido] = useState(false);
   const [aba, setAba] = useState<"visao" | "deslocamento" | "pausa" | "pedagio">("visao");
   const pedidosTarefa = PEDIDOS.filter((p) => tarefa.listaPedidos.includes(p.nPedido));
@@ -1207,7 +1283,7 @@ function LinhaTarefa({ tarefa, onAlterarOrdem }: { tarefa: Tarefa; onAlterarOrde
             {expandido ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
           </button>
         </td>
-        <td className="px-2 py-2 text-[11px] text-center">{tarefa.ordem}</td>
+        <td className="px-2 py-2 text-[11px] text-center text-gray-500">{index}</td>
         <td className="px-2 py-2 text-[11px] font-mono text-blue-700 font-medium">{tarefa.idTarefa}</td>
         <td className="px-2 py-2 text-[11px]">{tarefa.operacao}</td>
         <td className="px-2 py-2 text-[11px] font-mono">{tarefa.veiculo}</td>
@@ -1237,7 +1313,7 @@ function LinhaTarefa({ tarefa, onAlterarOrdem }: { tarefa: Tarefa; onAlterarOrde
             </span>
           ) : <span className="text-gray-300 text-[10px]">--</span>}
         </td>
-        <td className="px-2 py-2">
+        <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
           {semComprovanteTarefa ? (
             <span className="inline-flex items-center gap-1 text-amber-700">
               <IconeComprovante tem={false} />
@@ -1255,7 +1331,6 @@ function LinhaTarefa({ tarefa, onAlterarOrdem }: { tarefa: Tarefa; onAlterarOrde
         <td className="px-2 py-2 text-center"><ValidacaoBadge valor={tarefa.validacao.volumeEmbarcadoVal} /></td>
         <td className="px-2 py-2 text-center"><ValidacaoBadge valor={tarefa.validacao.registroEntrega} /></td>
         <td className="px-2 py-2 text-center"><ValidacaoBadge valor={tarefa.validacao.chegadaSaidaInformada} /></td>
-        <td className="px-2 py-2 text-center"><ValidacaoBadge valor={tarefa.validacao.ordemRoteirizacao} /></td>
         <td className="px-2 py-2 text-center"><ValidacaoBadge valor={tarefa.validacao.rotaFinalizada} /></td>
         <td className="px-2 py-2 text-center">
           <div className="flex items-center gap-1 justify-center">
@@ -1283,7 +1358,7 @@ function LinhaTarefa({ tarefa, onAlterarOrdem }: { tarefa: Tarefa; onAlterarOrde
 
       {expandido && (
         <tr>
-          <td colSpan={32} className="px-5 pb-3 bg-amber-50/30 overflow-visible">
+          <td colSpan={31} className="px-5 pb-3 bg-amber-50/30 overflow-visible">
             <div className="mt-2 border border-amber-200 rounded-md bg-white overflow-visible">
               <div className="flex border-b border-amber-200 bg-amber-50 relative z-10">
                 {(["visao","deslocamento","pausa","pedagio"] as const).map((a) => {
@@ -1337,6 +1412,19 @@ export function AbaTarefas({ tarefas, filtroStatus, filtroOperacaoGlobal }: AbaT
   const [ordemModal, setOrdemModal] = useState<{ tarefaId: string; base: ParadaTimeline[]; clientes: string[]; tarefa: Tarefa } | null>(null);
   const [timelineOverrides, setTimelineOverrides] = useState<Record<string, ParadaTimeline[]>>({});
   const [deslocamentoOverrides, setDeslocamentoOverrides] = useState<Record<string, Tarefa["deslocamentos"]>>({});
+  const ordemPorVeiculo = (() => {
+    const contadorPorVeiculo = new Map<string, number>();
+    const ordemPorId = new Map<string, number>();
+    const tarefasOrdenadas = [...tarefas].sort((a, b) => a.ordem - b.ordem);
+
+    for (const t of tarefasOrdenadas) {
+      const proximaOrdem = (contadorPorVeiculo.get(t.veiculo) ?? 0) + 1;
+      contadorPorVeiculo.set(t.veiculo, proximaOrdem);
+      ordemPorId.set(t.id, proximaOrdem);
+    }
+
+    return ordemPorId;
+  })();
 
   const tarefasComValidacao = tarefas.map((t) => {
     const timeline = timelineOverrides[t.id] ?? t.timeline;
@@ -1346,6 +1434,7 @@ export function AbaTarefas({ tarefas, filtroStatus, filtroOperacaoGlobal }: AbaT
     const volumeTotal = pedidosTarefa.reduce((s, p) => s + p.qtdVolumesTotal, 0);
     return {
       ...t,
+      ordem: ordemPorVeiculo.get(t.id) ?? t.ordem,
       timeline,
       deslocamentos,
       atual: formatarOrdemCliente(t.atual, 1),
@@ -1355,13 +1444,12 @@ export function AbaTarefas({ tarefas, filtroStatus, filtroOperacaoGlobal }: AbaT
       valVolEmb: t.validacao.volumeEmbarcadoVal ? "Sim" : "Não",
       valRegEntrega: t.validacao.registroEntrega ? "Sim" : "Não",
       valChegSaida: t.validacao.chegadaSaidaInformada ? "Sim" : "Não",
-      valOrdemRot: t.validacao.ordemRoteirizacao ? "Sim" : "Não",
       valRotaFinal: t.validacao.rotaFinalizada ? "Sim" : "Não",
       valResultado: calcularResultado(t.validacao),
     };
   });
 
-  const { sorted, sortConfig, handleSort } = useSortable(tarefasComValidacao, "ordem");
+  const { sorted, sortConfig, handleSort } = useSortable(tarefasComValidacao, "idTarefa");
   const { colFilters, setFilter, clearAllFilters, hasActiveFilters, applyColFilters, getUniqueValues } = useColFilters();
 
   const uniq = (arr: string[]) => [...new Set(arr)].filter(Boolean).sort();
@@ -1473,17 +1561,21 @@ export function AbaTarefas({ tarefas, filtroStatus, filtroOperacaoGlobal }: AbaT
             Limpar filtros de coluna ×
           </button>
         )}
-        <ActionDropdownButton
-          label="Exportar"
-          icon={<Download size={12} />}
-          className="ml-auto"
-          items={[
-            { label: "Tarefas", icon: <Download size={12} />, action: () => alert("Exportando tarefas...") },
-            { label: "Deslocamentos", icon: <Download size={12} />, action: () => alert("Exportando deslocamentos...") },
-            { label: "Pausas", icon: <Download size={12} />, action: () => alert("Exportando pausas...") },
-            { label: "Pedágios", icon: <Download size={12} />, action: () => alert("Exportando pedágios...") },
-          ]}
-        />
+        <div className="ml-auto flex items-center gap-2">
+          <span className="inline-flex items-center h-7 px-2.5 text-[11px] bg-amber-50 text-amber-700 rounded border border-amber-200">
+            {filtrados.length} tarefa(s)
+          </span>
+          <ActionDropdownButton
+            label="Exportar"
+            icon={<Download size={12} />}
+            items={[
+              { label: "Tarefas", icon: <Download size={12} />, action: () => alert("Exportando tarefas...") },
+              { label: "Deslocamentos", icon: <Download size={12} />, action: () => alert("Exportando deslocamentos...") },
+              { label: "Pausas", icon: <Download size={12} />, action: () => alert("Exportando pausas...") },
+              { label: "Pedágios", icon: <Download size={12} />, action: () => alert("Exportando pedágios...") },
+            ]}
+          />
+        </div>
       </div>
 
       {/* Tabela */}
@@ -1492,10 +1584,10 @@ export function AbaTarefas({ tarefas, filtroStatus, filtroOperacaoGlobal }: AbaT
           <thead className="bg-gray-100 sticky top-0 z-10">
             <tr>
               <th className="w-7" />
-              <ColFilterTh label="Ordem" sortKey="ordem" sortConfig={sortConfig} onSort={handleSort} values={getUniqueValues(sorted, "ordem")} selected={colFilters["ordem"] ?? new Set()} onFilterChange={(s) => setFilter("ordem", s)} />
+              <th className="px-2 py-1.5 text-[10px] font-semibold text-gray-600 uppercase">#</th>
               <ColFilterTh label="ID Tarefa" sortKey="idTarefa" sortConfig={sortConfig} onSort={handleSort} values={getUniqueValues(sorted, "idTarefa")} selected={colFilters["idTarefa"] ?? new Set()} onFilterChange={(s) => setFilter("idTarefa", s)} />
               <ColFilterTh label="Operação" sortKey="operacao" sortConfig={sortConfig} onSort={handleSort} values={getUniqueValues(sorted, "operacao")} selected={colFilters["operacao"] ?? new Set()} onFilterChange={(s) => setFilter("operacao", s)} />
-              <ColFilterTh label="Veículo" sortKey="veiculo" sortConfig={sortConfig} onSort={handleSort} values={getUniqueValues(sorted, "veiculo")} selected={colFilters["veiculo"] ?? new Set()} onFilterChange={(s) => setFilter("veiculo", s)} />
+              <ColFilterTh label="Placa" sortKey="veiculo" sortConfig={sortConfig} onSort={handleSort} values={getUniqueValues(sorted, "veiculo")} selected={colFilters["veiculo"] ?? new Set()} onFilterChange={(s) => setFilter("veiculo", s)} />
               <ColFilterTh label="Motorista" sortKey="motorista" sortConfig={sortConfig} onSort={handleSort} values={getUniqueValues(sorted, "motorista")} selected={colFilters["motorista"] ?? new Set()} onFilterChange={(s) => setFilter("motorista", s)} />
               <ColFilterTh label="Ajudante" sortKey="ajudante" sortConfig={sortConfig} onSort={handleSort} values={getUniqueValues(sorted, "ajudante")} selected={colFilters["ajudante"] ?? new Set()} onFilterChange={(s) => setFilter("ajudante", s)} />
               <ColFilterTh label="Dt. Roteir." sortKey="dataRoteirizacao" sortConfig={sortConfig} onSort={handleSort} values={getUniqueValues(sorted, "dataRoteirizacao")} selected={colFilters["dataRoteirizacao"] ?? new Set()} onFilterChange={(s) => setFilter("dataRoteirizacao", s)} />
@@ -1516,26 +1608,26 @@ export function AbaTarefas({ tarefas, filtroStatus, filtroOperacaoGlobal }: AbaT
               <ColFilterTh label="Vol. Emb.?" sortKey="valVolEmb" sortConfig={sortConfig} onSort={handleSort} tooltip="Responsável: Ajudante" values={getUniqueValues(sorted, "valVolEmb")} selected={colFilters["valVolEmb"] ?? new Set()} onFilterChange={(s) => setFilter("valVolEmb", s)} />
               <ColFilterTh label="Reg. Entrega?" sortKey="valRegEntrega" sortConfig={sortConfig} onSort={handleSort} tooltip="Responsável: Ajudante" values={getUniqueValues(sorted, "valRegEntrega")} selected={colFilters["valRegEntrega"] ?? new Set()} onFilterChange={(s) => setFilter("valRegEntrega", s)} />
               <ColFilterTh label="Cheg./Saída?" sortKey="valChegSaida" sortConfig={sortConfig} onSort={handleSort} tooltip="Responsável: Motorista" values={getUniqueValues(sorted, "valChegSaida")} selected={colFilters["valChegSaida"] ?? new Set()} onFilterChange={(s) => setFilter("valChegSaida", s)} />
-              <ColFilterTh label="Ordem Rot.?" sortKey="valOrdemRot" sortConfig={sortConfig} onSort={handleSort} tooltip="Responsável: Motorista" values={getUniqueValues(sorted, "valOrdemRot")} selected={colFilters["valOrdemRot"] ?? new Set()} onFilterChange={(s) => setFilter("valOrdemRot", s)} />
               <ColFilterTh label="Rota Final.?" sortKey="valRotaFinal" sortConfig={sortConfig} onSort={handleSort} tooltip="Responsável: Motorista" values={getUniqueValues(sorted, "valRotaFinal")} selected={colFilters["valRotaFinal"] ?? new Set()} onFilterChange={(s) => setFilter("valRotaFinal", s)} />
               <ColFilterTh label="Andamento" sortKey="valResultado" sortConfig={sortConfig} onSort={handleSort} values={getUniqueValues(sorted, "valResultado")} selected={colFilters["valResultado"] ?? new Set()} onFilterChange={(s) => setFilter("valResultado", s)} />
               <th className="px-2 py-1.5 text-[10px] font-semibold text-gray-600 uppercase">Ações</th>
             </tr>
           </thead>
           <tbody className="bg-white">
-            {filtrados.map((t) => (
-              <LinhaTarefa key={t.id} tarefa={t} onAlterarOrdem={abrirModalOrdem} />
+            {filtrados.map((t, index) => (
+              <LinhaTarefa key={t.id} tarefa={t} index={index + 1} onAlterarOrdem={abrirModalOrdem} />
             ))}
             <TotalRow>
               <td />
-              <td className="px-2 py-1.5 text-[10px] text-gray-500 uppercase" colSpan={13}>{filtrados.length} tarefa(s)</td>
+              <td className="px-2 py-1.5 text-[11px] text-center text-gray-500">#</td>
+              <td className="px-2 py-1.5 text-[10px] text-gray-500 uppercase" colSpan={12}>{filtrados.length} tarefa(s)</td>
               <td className="px-2 py-1.5 text-[11px] text-center font-bold">{filtrados.reduce((s, t) => s + t.nPedidos, 0)}</td>
               <td className="px-2 py-1.5 text-[11px] text-center font-bold">{totalVolumesFiltrados.atual}/{totalVolumesFiltrados.total}</td>
               <td />
               <td className="px-2 py-1.5 text-[11px]  font-bold">{fmt(filtrados.reduce((s, t) => s + t.peso, 0), "peso")}</td>
               <td className="px-2 py-1.5 text-[11px]  font-bold">{fmt(filtrados.reduce((s, t) => s + t.cubagem, 0), "cubagem")}</td>
               <td className="px-2 py-1.5 text-[11px]  font-bold">{fmt(filtrados.reduce((s, t) => s + t.valorTotal, 0), "moeda")}</td>
-              <td colSpan={8} />
+              <td colSpan={5} />
             </TotalRow>
           </tbody>
         </table>

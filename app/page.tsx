@@ -19,6 +19,7 @@ export default function AcompanhamentoPage() {
   const [filtroTransportadora, setFiltroTransportadora] = useState("");
   const [filtroPrioridade, setFiltroPrioridade] = useState("");
   const [filtroPedido, setFiltroPedido] = useState("");
+  const [filtroRemessa, setFiltroRemessa] = useState("");
   const [autoAtualizar, setAutoAtualizar] = useState(false);
   const [autoCountdown, setAutoCountdown] = useState(30);
   const [lastUpdate, setLastUpdate] = useState("");
@@ -85,6 +86,7 @@ export default function AcompanhamentoPage() {
     if (filtroOperacao && p.operacao !== filtroOperacao) return false;
     if (filtroPrioridade && p.prioridade !== filtroPrioridade) return false;
     if (filtroPedido && !p.nPedido.toLowerCase().includes(filtroPedido.toLowerCase())) return false;
+    if (filtroRemessa && !p.nRemessa.toLowerCase().includes(filtroRemessa.toLowerCase())) return false;
     return true;
   });
 
@@ -100,6 +102,7 @@ export default function AcompanhamentoPage() {
   const pedidosParaAba = PEDIDOS.filter((p) => {
     if (filtroOperacao && p.operacao !== filtroOperacao) return false;
     if (filtroPedido && !p.nPedido.toLowerCase().includes(filtroPedido.toLowerCase())) return false;
+    if (filtroRemessa && !p.nRemessa.toLowerCase().includes(filtroRemessa.toLowerCase())) return false;
     return true;
   });
 
@@ -116,6 +119,7 @@ export default function AcompanhamentoPage() {
         filtroTransportadora={filtroTransportadora} setFiltroTransportadora={setFiltroTransportadora}
         filtroPrioridade={filtroPrioridade} setFiltroPrioridade={setFiltroPrioridade}
         filtroPedido={filtroPedido} setFiltroPedido={setFiltroPedido}
+        filtroRemessa={filtroRemessa} setFiltroRemessa={setFiltroRemessa}
         autoAtualizar={autoAtualizar} setAutoAtualizar={setAutoAtualizar}
         autoCountdown={autoCountdown}
         onAtualizar={handleAtualizar}
@@ -181,6 +185,7 @@ export default function AcompanhamentoPage() {
               filtroStatus={cardsAtivos}
               filtroPrioridade={filtroPrioridade}
               filtroPedidoGlobal={filtroPedido}
+              filtroRemessaGlobal={filtroRemessa}
               filtroOperacaoGlobal={filtroOperacao}
             />
           )}

@@ -418,6 +418,8 @@ interface FiltrosGlobaisProps {
   setFiltroPrioridade: (v: string) => void;
   filtroPedido: string;
   setFiltroPedido: (v: string) => void;
+  filtroRemessa: string;
+  setFiltroRemessa: (v: string) => void;
   autoAtualizar: boolean;
   setAutoAtualizar: (v: boolean) => void;
   autoCountdown: number;
@@ -430,7 +432,7 @@ interface FiltrosGlobaisProps {
 export function FiltrosGlobais({
   filtroData, setFiltroData, filtroOperacao, setFiltroOperacao,
   filtroTransportadora, setFiltroTransportadora,
-  filtroPrioridade, setFiltroPrioridade, filtroPedido, setFiltroPedido,
+  filtroPrioridade, setFiltroPrioridade, filtroPedido, setFiltroPedido, filtroRemessa, setFiltroRemessa,
   autoAtualizar, setAutoAtualizar, autoCountdown, onAtualizar, lastUpdate, operacoes, transportadoras,
 }: FiltrosGlobaisProps) {
   return (
@@ -450,6 +452,15 @@ export function FiltrosGlobais({
             value={filtroPedido}
             onChange={(e) => setFiltroPedido(e.target.value)}
             placeholder="Pesquisar pedido..."
+            className="h-8 pl-6 pr-3 text-xs border border-gray-300 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-400 w-40"
+          />
+        </div>
+        <div className="relative">
+          <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            value={filtroRemessa}
+            onChange={(e) => setFiltroRemessa(e.target.value)}
+            placeholder="Pesquisar remessa..."
             className="h-8 pl-6 pr-3 text-xs border border-gray-300 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-400 w-40"
           />
         </div>
@@ -709,7 +720,7 @@ export function fmt(value: number, tipo: "moeda" | "peso" | "cubagem" | "numero"
 
 export function calcularResultado(v: ValidacaoOperacional): "Ok" | "Divergência" {
   if (v.pedidoNaoProgramado) return "Divergência";
-  const campos = [v.entregaRoterizada, v.volumeEmbarcadoVal, v.registroEntrega, v.chegadaSaidaInformada, v.ordemRoteirizacao, v.rotaFinalizada];
+  const campos = [v.entregaRoterizada, v.volumeEmbarcadoVal, v.registroEntrega, v.chegadaSaidaInformada, v.rotaFinalizada];
   return campos.every(Boolean) ? "Ok" : "Divergência";
 }
 

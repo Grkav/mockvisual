@@ -54,6 +54,7 @@ function AbasPedido({ pedido, filtroStatus }: { pedido: Pedido; filtroStatus?: S
         <table className="w-full text-[11px]">
           <thead className="bg-gray-50">
             <tr>
+              <th className="px-3 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">#</th>
               {["Nº Pedido", "Cliente", "Tarefa/Retirada", "Nº Volume", "Hora Embarque", "Hora Desembarque", "Hora Entrega", "Rota"].map((h) => (
                 <th key={h} className="px-3 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">{h}</th>
               ))}
@@ -69,8 +70,9 @@ function AbasPedido({ pedido, filtroStatus }: { pedido: Pedido; filtroStatus?: S
                 // SenÃ£o, mostrar todos
                 return true;
               })
-              .map((v) => (
+              .map((v, index) => (
                 <tr key={v.id} className="border-t border-gray-100 hover:bg-gray-50">
+                  <td className="px-3 py-1.5 text-gray-500">{index + 1}</td>
                   <td className="px-3 py-1.5">{pedido.nPedido}</td>
                   <td className="px-3 py-1.5">{pedido.cliente}</td>
                   <td className="px-3 py-1.5">{v.tarefaRetirada}</td>
@@ -89,14 +91,16 @@ function AbasPedido({ pedido, filtroStatus }: { pedido: Pedido; filtroStatus?: S
         <table className="w-full text-[11px]">
           <thead className="bg-gray-50">
             <tr>
+              <th className="px-2 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">#</th>
               {["ID", "ID Externo", "Produto", "Lote", "Validade", "Qtd Sol.", "Qtd Emb.", "Qtd Entregue", "Qtd Ressalva", "Vlr Unit.", "Vlr Total"].map((h) => (
                 <th key={h} className="px-2 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {pedido.itens.map((item) => (
+            {pedido.itens.map((item, index) => (
               <tr key={item.id} className="border-t border-gray-100 hover:bg-gray-50">
+                <td className="px-2 py-1.5 text-gray-500">{index + 1}</td>
                 <td className="px-2 py-1.5 font-mono text-[10px]">{item.id}</td>
                 <td className="px-2 py-1.5 text-[10px]">{item.idExterno}</td>
                 <td className="px-2 py-1.5">{item.nomeProduto}</td>
@@ -113,13 +117,13 @@ function AbasPedido({ pedido, filtroStatus }: { pedido: Pedido; filtroStatus?: S
               </tr>
             ))}
             <TotalRow>
-              <td className="px-2 py-1.5 text-[10px] text-gray-500 uppercase" colSpan={5}>Total</td>
-              <td className="px-2 py-1.5 text-right text-[11px]">{pedido.itens.reduce((s, i) => s + i.qtdSolicitada, 0)}</td>
-              <td className="px-2 py-1.5 text-right text-[11px]">{pedido.itens.reduce((s, i) => s + i.qtdEmbarcada, 0)}</td>
-              <td className="px-2 py-1.5 text-right text-[11px]">{pedido.itens.reduce((s, i) => s + i.qtdEntregue, 0)}</td>
-              <td className="px-2 py-1.5 text-right text-[11px]">{pedido.itens.reduce((s, i) => s + i.qtdRessalva, 0)}</td>
+              <td className="px-2 py-1.5 text-[10px] text-gray-500 uppercase" colSpan={6}>Total</td>
+              <td className="px-2 py-1.5 text-left text-[11px]">{pedido.itens.reduce((s, i) => s + i.qtdSolicitada, 0)}</td>
+              <td className="px-2 py-1.5 text-left text-[11px]">{pedido.itens.reduce((s, i) => s + i.qtdEmbarcada, 0)}</td>
+              <td className="px-2 py-1.5 text-left text-[11px]">{pedido.itens.reduce((s, i) => s + i.qtdEntregue, 0)}</td>
+              <td className="px-2 py-1.5 text-left text-[11px]">{pedido.itens.reduce((s, i) => s + i.qtdRessalva, 0)}</td>
               <td />
-              <td className="px-2 py-1.5 text-right text-[11px]">{fmt(pedido.itens.reduce((s, i) => s + i.valorTotal, 0), "moeda")}</td>
+              <td className="px-2 py-1.5 text-left text-[11px]">{fmt(pedido.itens.reduce((s, i) => s + i.valorTotal, 0), "moeda")}</td>
             </TotalRow>
           </tbody>
         </table>
@@ -129,6 +133,7 @@ function AbasPedido({ pedido, filtroStatus }: { pedido: Pedido; filtroStatus?: S
         <table className="w-full text-[11px]">
           <thead className="bg-gray-50">
             <tr>
+              <th className="px-3 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">#</th>
               {["Tipo", "Arquivo", "Data/Hora", "Usuário", "Ação"].map((h) => (
                 <th key={h} className="px-3 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">{h}</th>
               ))}
@@ -136,9 +141,10 @@ function AbasPedido({ pedido, filtroStatus }: { pedido: Pedido; filtroStatus?: S
           </thead>
           <tbody>
             {pedido.comprovantes.length === 0 ? (
-              <tr><td colSpan={5} className="px-3 py-4 text-center text-gray-400 text-xs">Nenhum comprovante</td></tr>
+              <tr><td colSpan={6} className="px-3 py-4 text-center text-gray-400 text-xs">Nenhum comprovante</td></tr>
             ) : pedido.comprovantes.map((c, idx) => (
               <tr key={c.id} className="border-t border-gray-100 hover:bg-gray-50">
+                <td className="px-3 py-1.5 text-gray-500">{idx + 1}</td>
                 <td className="px-3 py-1.5">{c.tipo}</td>
                 <td
                   className="px-3 py-1.5 text-blue-600 underline cursor-pointer"
@@ -166,6 +172,7 @@ function AbasPedido({ pedido, filtroStatus }: { pedido: Pedido; filtroStatus?: S
         <table className="w-full text-[11px]">
           <thead className="bg-gray-50">
             <tr>
+              <th className="px-3 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">#</th>
               {["Tipo", "Descrição", "Data/Hora", "Usuário", "Status", "FOTO"].map((h) => (
                 <th key={h} className="px-3 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">{h}</th>
               ))}
@@ -173,9 +180,10 @@ function AbasPedido({ pedido, filtroStatus }: { pedido: Pedido; filtroStatus?: S
           </thead>
           <tbody>
             {pedido.ressalvas.length === 0 ? (
-              <tr><td colSpan={6} className="px-3 py-4 text-center text-gray-400 text-xs">Nenhuma ressalva</td></tr>
-            ) : pedido.ressalvas.map((r) => (
+              <tr><td colSpan={7} className="px-3 py-4 text-center text-gray-400 text-xs">Nenhuma ressalva</td></tr>
+            ) : pedido.ressalvas.map((r, index) => (
               <tr key={r.id} className="border-t border-gray-100 hover:bg-gray-50">
+                <td className="px-3 py-1.5 text-gray-500">{index + 1}</td>
                 <td className="px-3 py-1.5">{r.tipo}</td>
                 <td className="px-3 py-1.5">{r.descricao}</td>
                 <td className="px-3 py-1.5">{r.dataHora}</td>
@@ -205,8 +213,9 @@ function AbasPedido({ pedido, filtroStatus }: { pedido: Pedido; filtroStatus?: S
 }
 
 // â”€â”€â”€ Linha de Pedido â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function LinhaPedido({ pedido, filtroStatus }: { pedido: Pedido; filtroStatus?: StatusPedido[] }) {
+function LinhaPedido({ pedido, filtroStatus, index }: { pedido: Pedido; filtroStatus?: StatusPedido[]; index: number }) {
   const [expandido, setExpandido] = useState(false);
+  const [modalCompIcone, setModalCompIcone] = useState<{ comprovantes: Comprovante[]; indice: number } | null>(null);
   const ressalvaSemFoto = Boolean(
     pedido.tipoRessalva &&
     (pedido.ressalvas.length === 0 || pedido.ressalvas.some((r) => !r.temFoto))
@@ -214,6 +223,14 @@ function LinhaPedido({ pedido, filtroStatus }: { pedido: Pedido; filtroStatus?: 
 
   return (
     <>
+      {modalCompIcone && (
+        <ModalComprovante
+          comprovantes={modalCompIcone.comprovantes}
+          indiceInicial={modalCompIcone.indice}
+          pedidoNum={pedido.nPedido}
+          onClose={() => setModalCompIcone(null)}
+        />
+      )}
       <tr
         onClick={() => setExpandido(!expandido)}
         className={`border-t border-gray-100 cursor-pointer transition-colors ${expandido ? "bg-indigo-50/60" : "hover:bg-gray-50"}`}
@@ -223,6 +240,7 @@ function LinhaPedido({ pedido, filtroStatus }: { pedido: Pedido; filtroStatus?: 
             {expandido ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
           </button>
         </td>
+        <td className="px-2 py-2 text-[11px] text-center text-gray-500">{index}</td>
         <td className="px-2 py-2 text-[11px]">{pedido.operacao}</td>
         <td className="px-2 py-2 text-[11px] text-blue-700 font-semibold">{pedido.nPedido}</td>
         <td className="px-2 py-2 text-[11px]">{pedido.nRemessa}</td>
@@ -241,9 +259,19 @@ function LinhaPedido({ pedido, filtroStatus }: { pedido: Pedido; filtroStatus?: 
         <td className="px-2 py-2 text-[11px] font-mono">{pedido.placa}</td>
         <td className="px-2 py-2 text-[11px]">{pedido.motorista}</td>
         <td className="px-2 py-2 text-[11px]">{pedido.ajudante}</td>
-        <td className="px-2 py-2">
+        <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
           {pedido.comComprovante ? (
-            <IconeComprovante tem={true} />
+            <button
+              type="button"
+              className="inline-flex"
+              title="Abrir comprovante"
+              onClick={() => {
+                if (pedido.comprovantes.length === 0) return;
+                setModalCompIcone({ comprovantes: pedido.comprovantes, indice: 0 });
+              }}
+            >
+              <IconeComprovante tem={true} />
+            </button>
           ) : (
             <span className="inline-flex items-center gap-1 text-amber-700">
               <IconeComprovante tem={false} />
@@ -269,7 +297,6 @@ function LinhaPedido({ pedido, filtroStatus }: { pedido: Pedido; filtroStatus?: 
         <td className="px-2 py-2 text-center"><ValidacaoBadge valor={pedido.validacao.volumeEmbarcadoVal} /></td>
         <td className="px-2 py-2 text-center"><ValidacaoBadge valor={pedido.validacao.registroEntrega} /></td>
         <td className="px-2 py-2 text-center"><ValidacaoBadge valor={pedido.validacao.chegadaSaidaInformada} /></td>
-        <td className="px-2 py-2 text-center"><ValidacaoBadge valor={pedido.validacao.ordemRoteirizacao} /></td>
         <td className="px-2 py-2 text-center"><ValidacaoBadge valor={pedido.validacao.rotaFinalizada} /></td>
         <td className="px-2 py-2 text-center">
           <div className="flex items-center gap-1 justify-center">
@@ -305,10 +332,11 @@ interface AbaPedidosProps {
   filtroStatus: StatusPedido[];
   filtroPrioridade: string;
   filtroPedidoGlobal: string;
+  filtroRemessaGlobal: string;
   filtroOperacaoGlobal: string;
 }
 
-export function AbaPedidos({ pedidos, filtroStatus, filtroPrioridade, filtroPedidoGlobal, filtroOperacaoGlobal }: AbaPedidosProps) {
+export function AbaPedidos({ pedidos, filtroStatus, filtroPrioridade, filtroPedidoGlobal, filtroRemessaGlobal, filtroOperacaoGlobal }: AbaPedidosProps) {
   const [filtroPedido, setFiltroPedido] = useState("");
   const [filtroRemessa, setFiltroRemessa] = useState("");
   const [filtroCliente, setFiltroCliente] = useState("");
@@ -325,7 +353,6 @@ export function AbaPedidos({ pedidos, filtroStatus, filtroPrioridade, filtroPedi
     valVolEmb: p.validacao.volumeEmbarcadoVal ? "Sim" : "Não",
     valRegEntrega: p.validacao.registroEntrega ? "Sim" : "Não",
     valChegSaida: p.validacao.chegadaSaidaInformada ? "Sim" : "Não",
-    valOrdemRot: p.validacao.ordemRoteirizacao ? "Sim" : "Não",
     valRotaFinal: p.validacao.rotaFinalizada ? "Sim" : "Não",
     valResultado: calcularResultado(p.validacao),
   }));
@@ -346,6 +373,7 @@ export function AbaPedidos({ pedidos, filtroStatus, filtroPrioridade, filtroPedi
     }
     if (filtroPrioridade && p.prioridade !== filtroPrioridade) return false;
     if (filtroPedidoGlobal && !p.nPedido.toLowerCase().includes(filtroPedidoGlobal.toLowerCase())) return false;
+    if (filtroRemessaGlobal && !p.nRemessa.toLowerCase().includes(filtroRemessaGlobal.toLowerCase())) return false;
     if (filtroOperacaoGlobal && p.operacao !== filtroOperacaoGlobal) return false;
     if (filtroPedido && !p.nPedido.toLowerCase().includes(filtroPedido.toLowerCase())) return false;
     if (filtroRemessa && !p.nRemessa.toLowerCase().includes(filtroRemessa.toLowerCase())) return false;
@@ -396,16 +424,20 @@ export function AbaPedidos({ pedidos, filtroStatus, filtroPrioridade, filtroPedi
             Limpar filtros de coluna ×
           </button>
         )}
-        <ActionDropdownButton
-          label="Exportar"
-          icon={<Download size={12} />}
-          className="ml-auto"
-          items={[
-            { label: "Pedidos", icon: <Download size={12} />, action: () => alert("Exportando pedidos...") },
-            { label: "Volumes", icon: <Download size={12} />, action: () => alert("Exportando volumes...") },
-            { label: "Itens", icon: <Download size={12} />, action: () => alert("Exportando itens...") },
-          ]}
-        />
+        <div className="ml-auto flex items-center gap-2">
+          <span className="inline-flex items-center h-7 px-2.5 text-[11px] bg-indigo-50 text-indigo-700 rounded border border-indigo-200">
+            {filtrados.length} pedido(s)
+          </span>
+          <ActionDropdownButton
+            label="Exportar"
+            icon={<Download size={12} />}
+            items={[
+              { label: "Pedidos", icon: <Download size={12} />, action: () => alert("Exportando pedidos...") },
+              { label: "Volumes", icon: <Download size={12} />, action: () => alert("Exportando volumes...") },
+              { label: "Itens", icon: <Download size={12} />, action: () => alert("Exportando itens...") },
+            ]}
+          />
+        </div>
       </div>
 
       {/* Tabela */}
@@ -414,6 +446,7 @@ export function AbaPedidos({ pedidos, filtroStatus, filtroPrioridade, filtroPedi
           <thead className="bg-gray-100 sticky top-0 z-10">
             <tr>
               <th className="w-7" />
+              <th className="px-2 py-1.5 text-[10px] font-semibold text-gray-600 uppercase">#</th>
               <ColFilterTh label="Operação" sortKey="operacao" sortConfig={sortConfig} onSort={handleSort} values={getUniqueValues(sorted, "operacao")} selected={colFilters["operacao"] ?? new Set()} onFilterChange={(s) => setFilter("operacao", s)} />
               <ColFilterTh label="Nº Pedido" sortKey="nPedido" sortConfig={sortConfig} onSort={handleSort} values={getUniqueValues(sorted, "nPedido")} selected={colFilters["nPedido"] ?? new Set()} onFilterChange={(s) => setFilter("nPedido", s)} />
               <ColFilterTh label="Remessa" sortKey="nRemessa" sortConfig={sortConfig} onSort={handleSort} values={getUniqueValues(sorted, "nRemessa")} selected={colFilters["nRemessa"] ?? new Set()} onFilterChange={(s) => setFilter("nRemessa", s)} />
@@ -436,17 +469,18 @@ export function AbaPedidos({ pedidos, filtroStatus, filtroPrioridade, filtroPedi
               <ColFilterTh label="Vol. Emb.?" sortKey="valVolEmb" sortConfig={sortConfig} onSort={handleSort} tooltip="Responsável: Ajudante" values={getUniqueValues(sorted, "valVolEmb")} selected={colFilters["valVolEmb"] ?? new Set()} onFilterChange={(s) => setFilter("valVolEmb", s)} />
               <ColFilterTh label="Reg. Entrega?" sortKey="valRegEntrega" sortConfig={sortConfig} onSort={handleSort} tooltip="Responsável: Ajudante" values={getUniqueValues(sorted, "valRegEntrega")} selected={colFilters["valRegEntrega"] ?? new Set()} onFilterChange={(s) => setFilter("valRegEntrega", s)} />
               <ColFilterTh label="Cheg./Saída?" sortKey="valChegSaida" sortConfig={sortConfig} onSort={handleSort} tooltip="Responsável: Motorista" values={getUniqueValues(sorted, "valChegSaida")} selected={colFilters["valChegSaida"] ?? new Set()} onFilterChange={(s) => setFilter("valChegSaida", s)} />
-              <ColFilterTh label="Ordem Rot.?" sortKey="valOrdemRot" sortConfig={sortConfig} onSort={handleSort} tooltip="Responsável: Motorista" values={getUniqueValues(sorted, "valOrdemRot")} selected={colFilters["valOrdemRot"] ?? new Set()} onFilterChange={(s) => setFilter("valOrdemRot", s)} />
               <ColFilterTh label="Rota Final.?" sortKey="valRotaFinal" sortConfig={sortConfig} onSort={handleSort} tooltip="Responsável: Motorista" values={getUniqueValues(sorted, "valRotaFinal")} selected={colFilters["valRotaFinal"] ?? new Set()} onFilterChange={(s) => setFilter("valRotaFinal", s)} />
               <ColFilterTh label="Andamento" sortKey="valResultado" sortConfig={sortConfig} onSort={handleSort} values={getUniqueValues(sorted, "valResultado")} selected={colFilters["valResultado"] ?? new Set()} onFilterChange={(s) => setFilter("valResultado", s)} />
               <th className="px-2 py-1.5 text-[10px] font-semibold text-gray-600 uppercase">Ações</th>
             </tr>
           </thead>
           <tbody className="bg-white">
-            {filtrados.map((p) => (
-              <LinhaPedido key={p.id} pedido={p} filtroStatus={filtroStatus} />
+            {filtrados.map((p, index) => (
+              <LinhaPedido key={p.id} pedido={p} filtroStatus={filtroStatus} index={index + 1} />
             ))}
             <TotalRow>
+              <td />
+              <td className="px-2 py-1.5 text-[11px] text-center text-gray-500">#</td>
               <td className="px-2 py-1.5 text-[11px] font-bold text-gray-600">{filtrados.length} pedido(s)</td>
               <td className="px-2 py-1.5" colSpan={7} />
               <td className="px-2 py-1.5 text-[11px] text-center font-bold">
@@ -455,7 +489,7 @@ export function AbaPedidos({ pedidos, filtroStatus, filtroPrioridade, filtroPedi
               <td className="px-2 py-1.5 text-[11px] text-right font-bold">{fmt(filtrados.reduce((s, p) => s + p.peso, 0), "peso")}</td>
               <td className="px-2 py-1.5 text-[11px] text-right font-bold">{fmt(filtrados.reduce((s, p) => s + p.cubagem, 0), "cubagem")}</td>
               <td className="px-2 py-1.5 text-[11px] text-right font-bold">{fmt(filtrados.reduce((s, p) => s + p.valorTotal, 0), "moeda")}</td>
-              <td colSpan={15} />
+              <td colSpan={13} />
             </TotalRow>
           </tbody>
         </table>
