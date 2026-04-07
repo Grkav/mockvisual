@@ -1017,6 +1017,7 @@ function TooltipPedidos({ tarefa }: { tarefa: Tarefa }) {
   const [open, setOpen] = useState(false);
   const [mostrarTodos, setMostrarTodos] = useState(false);
   const [pedidoModal, setPedidoModal] = useState<Pedido | null>(null);
+  const fecharTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pedidosDaTarefa = tarefa.listaPedidos.map((nPed) => ({
     nPed,
     pedido: PEDIDOS.find((p) => p.nPedido === nPed) ?? null,
@@ -1024,17 +1025,37 @@ function TooltipPedidos({ tarefa }: { tarefa: Tarefa }) {
   const pedidosVisiveis = mostrarTodos ? pedidosDaTarefa : pedidosDaTarefa.slice(0, 3);
 
   function abrirTooltip() {
+    if (fecharTimeoutRef.current) {
+      clearTimeout(fecharTimeoutRef.current);
+      fecharTimeoutRef.current = null;
+    }
     setOpen(true);
-    setMostrarTodos(false);
+  }
+
+  function agendarFechamentoTooltip() {
+    if (fecharTimeoutRef.current) clearTimeout(fecharTimeoutRef.current);
+    fecharTimeoutRef.current = setTimeout(() => {
+      fecharTooltip();
+    }, 220);
   }
 
   function fecharTooltip() {
+    if (fecharTimeoutRef.current) {
+      clearTimeout(fecharTimeoutRef.current);
+      fecharTimeoutRef.current = null;
+    }
     setOpen(false);
     setMostrarTodos(false);
   }
 
+  useEffect(() => {
+    return () => {
+      if (fecharTimeoutRef.current) clearTimeout(fecharTimeoutRef.current);
+    };
+  }, []);
+
   return (
-    <div className="relative inline-block" onMouseEnter={abrirTooltip} onMouseLeave={fecharTooltip}>
+    <div className="relative inline-block" onMouseEnter={abrirTooltip} onMouseLeave={agendarFechamentoTooltip}>
       <button
         className="text-blue-700 font-semibold underline hover:text-blue-900 text-[11px]"
         onClick={(e) => { e.stopPropagation(); abrirTooltip(); }}
@@ -1045,6 +1066,8 @@ function TooltipPedidos({ tarefa }: { tarefa: Tarefa }) {
         <>
           <div
             className="absolute left-0 z-50 mt-1 bg-white border border-gray-200 rounded shadow-lg w-[420px] max-w-[90vw]"
+            onMouseEnter={abrirTooltip}
+            onMouseLeave={agendarFechamentoTooltip}
           >
             <p className="px-3 py-1.5 text-[10px] font-semibold text-gray-500 uppercase border-b border-gray-100">Pedidos da Tarefa</p>
             <div className="grid grid-cols-3 gap-2 p-2">
