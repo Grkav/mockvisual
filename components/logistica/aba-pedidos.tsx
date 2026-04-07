@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState } from "react";
-import { ChevronRight, ChevronDown, Download, CameraOff } from "lucide-react";
+import { ChevronRight, ChevronDown, Download, CameraOff, Power, ClipboardCheck, AlertTriangle } from "lucide-react";
 import type { Pedido, StatusPedido, Comprovante } from "@/lib/mock-data";
 import { isPedidoParcialmenteEmbarcado } from "@/lib/mock-data";
 import {
@@ -278,13 +278,13 @@ function LinhaPedido({ pedido, filtroStatus }: { pedido: Pedido; filtroStatus?: 
         </td>
         <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
           <ElipsisMenu items={[
+            { label: "Inativar Pedido", icon: <Power size={12} />, action: () => alert(`Inativando pedido ${pedido.nPedido}`), danger: true },
+            { label: "Registrar entrega", icon: <ClipboardCheck size={12} />, action: () => alert(`Registrando entrega do pedido ${pedido.nPedido}`) },
+            { label: "Registrar Ressalva", icon: <AlertTriangle size={12} />, action: () => alert(`Registrando ressalva do pedido ${pedido.nPedido}`) },
             { label: "Exportar Volumes desse Pedido", icon: <Download size={12} />, action: () => alert(`Exportando volumes ${pedido.nPedido}`) },
             { label: "Exportar Itens desse Pedido", icon: <Download size={12} />, action: () => alert(`Exportando itens ${pedido.nPedido}`) },
             { label: "Exportar Comprovantes desse Pedido", icon: <Download size={12} />, action: () => alert(`Exportando comprovantes ${pedido.nPedido}`) },
             { label: "Exportar Ressalvas desse Pedido", icon: <Download size={12} />, action: () => alert(`Exportando ressalvas ${pedido.nPedido}`) },
-            { label: "Inativar Pedido", action: () => alert(`Inativando pedido ${pedido.nPedido}`), danger: true },
-            { label: "Registrar entrega", action: () => alert(`Registrando entrega do pedido ${pedido.nPedido}`) },
-            { label: "Registrar Ressalva", action: () => alert(`Registrando ressalva do pedido ${pedido.nPedido}`) },
           ]} />
         </td>
       </tr>

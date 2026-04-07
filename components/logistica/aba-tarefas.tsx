@@ -191,8 +191,18 @@ function ModalPedidosParada({
                     <td className="px-3 py-2  font-medium">{fmt(p.valorTotal, "moeda")}</td>
                     <td className="px-3 py-2">
                       {p.tipoRessalva ? (
-                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${p.tipoRessalva === "No Pedido" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"}`}>
-                          {p.tipoRessalva}
+                        <span
+                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                            p.tipoRessalva === "No Pedido" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"
+                          }`}
+                        >
+                            {p.tipoRessalva}
+                          {(p.ressalvas.length === 0 || p.ressalvas.some((r) => !r.temFoto)) && (
+                            <>
+                              <span>-</span>
+                              <CameraOff size={12} />
+                            </>
+                          )}
                         </span>
                       ) : <span className="text-gray-300">--</span>}
                     </td>
