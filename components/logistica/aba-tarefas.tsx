@@ -12,6 +12,7 @@ import {
   ValidacaoBadge, ResultadoBadge, NaoProgramadoBadge, ThValidacao,
 } from "@/components/logistica/layout-components";
 import { ModalComprovante } from "@/components/logistica/modal-comprovante";
+import { ModalMapaVeiculo } from "@/components/logistica/aba-veiculos";
 
 // â”€â”€â”€ Modal Pedidos de uma parada â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function ModalPedidosParada({
@@ -871,7 +872,55 @@ function DeslocamentoTarefa({ tarefa }: { tarefa: Tarefa }) {
 
 // â”€â”€â”€ Pausa â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function PausaTarefa({ tarefa }: { tarefa: Tarefa }) {
-  if (tarefa.pausas.length === 0) {
+  type CampoEditavelPausa = "inicio" | "fim";
+  const [pausasEditadas, setPausasEditadas] = useState(tarefa.pausas);
+  const [editando, setEditando] = useState<{ id: string; campo: CampoEditavelPausa } | null>(null);
+
+  useEffect(() => {
+    setPausasEditadas(tarefa.pausas);
+    setEditando(null);
+  }, [tarefa.id, tarefa.pausas]);
+
+  function salvarEdicao(id: string, campo: CampoEditavelPausa, valorRaw: string) {
+    setPausasEditadas((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, [campo]: valorRaw } : p))
+    );
+    setEditando(null);
+  }
+
+  function renderCampoEditavel(p: Tarefa["pausas"][number], campo: CampoEditavelPausa) {
+    const emEdicao = editando?.id === p.id && editando?.campo === campo;
+    if (emEdicao) {
+      return (
+        <input
+          autoFocus
+          type="text"
+          defaultValue={p[campo] ?? ""}
+          className="h-6 w-full min-w-[90px] rounded border border-blue-300 px-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-blue-400"
+          onBlur={(e) => salvarEdicao(p.id, campo, e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") salvarEdicao(p.id, campo, (e.target as HTMLInputElement).value);
+            if (e.key === "Escape") setEditando(null);
+          }}
+        />
+      );
+    }
+    return (
+      <div className="inline-flex items-center gap-1">
+        <span onDoubleClick={() => setEditando({ id: p.id, campo })}>{p[campo] || "--"}</span>
+        <button
+          type="button"
+          className="text-gray-400 hover:text-blue-600"
+          onClick={() => setEditando({ id: p.id, campo })}
+          title="Editar"
+        >
+          <Pencil size={10} />
+        </button>
+      </div>
+    );
+  }
+
+  if (pausasEditadas.length === 0) {
     return <p className="py-6 text-center text-xs text-gray-400">Nenhuma pausa registrada.</p>;
   }
   return (
@@ -885,13 +934,13 @@ function PausaTarefa({ tarefa }: { tarefa: Tarefa }) {
         </tr>
       </thead>
       <tbody>
-        {tarefa.pausas.map((p, index) => (
+        {pausasEditadas.map((p, index) => (
           <tr key={p.id} className="border-t border-gray-100 hover:bg-gray-50">
             <td className="px-3 py-1.5 text-gray-500">{index + 1}</td>
             <td className="px-3 py-1.5">{p.motivo}</td>
             <td className="px-3 py-1.5 text-gray-500">{p.observacao}</td>
-            <td className="px-3 py-1.5">{p.inicio}</td>
-            <td className="px-3 py-1.5">{p.fim}</td>
+            <td className="px-3 py-1.5">{renderCampoEditavel(p, "inicio")}</td>
+            <td className="px-3 py-1.5">{renderCampoEditavel(p, "fim")}</td>
           </tr>
         ))}
       </tbody>
@@ -1258,7 +1307,17 @@ function ModalOrdemEntrega({
 }
 
 // â”€â”€â”€ Linha de Tarefa â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function LinhaTarefa({ tarefa, index, onAlterarOrdem }: { tarefa: Tarefa; index: number; onAlterarOrdem: (t: Tarefa) => void }) {
+function LinhaTarefa({
+  tarefa,
+  index,
+  onAlterarOrdem,
+  onAbrirMapa,
+}: {
+  tarefa: Tarefa;
+  index: number;
+  onAlterarOrdem: (t: Tarefa) => void;
+  onAbrirMapa: (placa: string) => void;
+}) {
   const [expandido, setExpandido] = useState(false);
   const [aba, setAba] = useState<"visao" | "deslocamento" | "pausa" | "pedagio">("visao");
   const pedidosTarefa = PEDIDOS.filter((p) => tarefa.listaPedidos.includes(p.nPedido));
@@ -1286,7 +1345,14 @@ function LinhaTarefa({ tarefa, index, onAlterarOrdem }: { tarefa: Tarefa; index:
         <td className="px-2 py-2 text-[11px] text-center text-gray-500">{index}</td>
         <td className="px-2 py-2 text-[11px] font-mono text-blue-700 font-medium">{tarefa.idTarefa}</td>
         <td className="px-2 py-2 text-[11px]">{tarefa.operacao}</td>
-        <td className="px-2 py-2 text-[11px] font-mono">{tarefa.veiculo}</td>
+        <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => onAbrirMapa(tarefa.veiculo)}
+            className="text-blue-700 font-semibold text-[11px] hover:underline font-mono"
+          >
+            {tarefa.veiculo}
+          </button>
+        </td>
         <td className="px-2 py-2 text-[11px]">{tarefa.motorista}</td>
         <td className="px-2 py-2 text-[11px]">{tarefa.ajudante}</td>
         <td className="px-2 py-2 text-[11px] text-center">{tarefa.dataRoteirizacao || "--"}</td>
@@ -1412,6 +1478,7 @@ export function AbaTarefas({ tarefas, filtroStatus, filtroOperacaoGlobal }: AbaT
   const [ordemModal, setOrdemModal] = useState<{ tarefaId: string; base: ParadaTimeline[]; clientes: string[]; tarefa: Tarefa } | null>(null);
   const [timelineOverrides, setTimelineOverrides] = useState<Record<string, ParadaTimeline[]>>({});
   const [deslocamentoOverrides, setDeslocamentoOverrides] = useState<Record<string, Tarefa["deslocamentos"]>>({});
+  const [veiculoMapa, setVeiculoMapa] = useState<(typeof VEICULOS)[number] | null>(null);
   const ordemPorVeiculo = (() => {
     const contadorPorVeiculo = new Map<string, number>();
     const ordemPorId = new Map<string, number>();
@@ -1527,8 +1594,17 @@ export function AbaTarefas({ tarefas, filtroStatus, filtroOperacaoGlobal }: AbaT
     setOrdemModal(null);
   }
 
+  function abrirMapaPorPlaca(placa: string) {
+    const veiculo = VEICULOS.find((v) => v.placa === placa);
+    if (!veiculo) return;
+    setVeiculoMapa(veiculo);
+  }
+
   return (
     <div className="flex flex-col h-full">
+      {veiculoMapa && (
+        <ModalMapaVeiculo veiculo={veiculoMapa} onClose={() => setVeiculoMapa(null)} />
+      )}
       {ordemModal && (
         <ModalOrdemEntrega
           clientesIniciais={ordemModal.clientes}
@@ -1615,12 +1691,18 @@ export function AbaTarefas({ tarefas, filtroStatus, filtroOperacaoGlobal }: AbaT
           </thead>
           <tbody className="bg-white">
             {filtrados.map((t, index) => (
-              <LinhaTarefa key={t.id} tarefa={t} index={index + 1} onAlterarOrdem={abrirModalOrdem} />
+              <LinhaTarefa
+                key={t.id}
+                tarefa={t}
+                index={index + 1}
+                onAlterarOrdem={abrirModalOrdem}
+                onAbrirMapa={abrirMapaPorPlaca}
+              />
             ))}
             <TotalRow>
               <td />
               <td className="px-2 py-1.5 text-[11px] text-center text-gray-500">#</td>
-              <td className="px-2 py-1.5 text-[10px] text-gray-500 uppercase" colSpan={12}>{filtrados.length} tarefa(s)</td>
+              <td className="px-2 py-1.5 text-[10px] text-gray-500 uppercase" colSpan={12}>{filtrados.length} de {tarefas.length} tarefas</td>
               <td className="px-2 py-1.5 text-[11px] text-center font-bold">{filtrados.reduce((s, t) => s + t.nPedidos, 0)}</td>
               <td className="px-2 py-1.5 text-[11px] text-center font-bold">{totalVolumesFiltrados.atual}/{totalVolumesFiltrados.total}</td>
               <td />

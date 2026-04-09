@@ -2,14 +2,15 @@
 
 import { useState } from "react";
 import { ChevronRight, ChevronDown, Download, CameraOff, Power, ClipboardCheck, AlertTriangle } from "lucide-react";
-import type { Pedido, StatusPedido, Comprovante } from "@/lib/mock-data";
-import { isPedidoParcialmenteEmbarcado } from "@/lib/mock-data";
+import type { Pedido, StatusPedido, Comprovante, Veiculo } from "@/lib/mock-data";
+import { VEICULOS, isPedidoParcialmenteEmbarcado } from "@/lib/mock-data";
 import {
   SearchSelect, ElipsisMenu, ColFilterTh, TotalRow, IconeComprovante, ActionDropdownButton,
   StatusBadge, fmt, useSortable, useColFilters, calcularResultado,
   ValidacaoBadge, ResultadoBadge,
 } from "@/components/logistica/layout-components";
 import { ModalComprovante } from "@/components/logistica/modal-comprovante";
+import { ModalMapaVeiculo } from "@/components/logistica/aba-veiculos";
 
 // â”€â”€â”€ Abas internas do pedido (reutilizÃ¡vel) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function AbasPedido({ pedido, filtroStatus }: { pedido: Pedido; filtroStatus?: StatusPedido[] }) {
@@ -213,7 +214,17 @@ function AbasPedido({ pedido, filtroStatus }: { pedido: Pedido; filtroStatus?: S
 }
 
 // â”€â”€â”€ Linha de Pedido â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function LinhaPedido({ pedido, filtroStatus, index }: { pedido: Pedido; filtroStatus?: StatusPedido[]; index: number }) {
+function LinhaPedido({
+  pedido,
+  filtroStatus,
+  index,
+  onAbrirMapa,
+}: {
+  pedido: Pedido;
+  filtroStatus?: StatusPedido[];
+  index: number;
+  onAbrirMapa: (pedido: Pedido) => void;
+}) {
   const [expandido, setExpandido] = useState(false);
   const [modalCompIcone, setModalCompIcone] = useState<{ comprovantes: Comprovante[]; indice: number } | null>(null);
   const ressalvaSemFoto = Boolean(
@@ -256,7 +267,14 @@ function LinhaPedido({ pedido, filtroStatus, index }: { pedido: Pedido; filtroSt
         <td className="px-2 py-2">
           <span className="inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">{pedido.prioridade}</span>
         </td>
-        <td className="px-2 py-2 text-[11px] font-mono">{pedido.placa}</td>
+        <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => onAbrirMapa(pedido)}
+            className="text-blue-700 font-semibold text-[11px] hover:underline font-mono"
+          >
+            {pedido.placa}
+          </button>
+        </td>
         <td className="px-2 py-2 text-[11px]">{pedido.motorista}</td>
         <td className="px-2 py-2 text-[11px]">{pedido.ajudante}</td>
         <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
@@ -346,6 +364,7 @@ export function AbaPedidos({ pedidos, filtroStatus, filtroPrioridade, filtroPedi
   const [filtroVeiculo, setFiltroVeiculo] = useState("");
   const [filtroRessalva, setFiltroRessalva] = useState("");
   const [filtroComprovante, setFiltroComprovante] = useState("");
+  const [pedidoMapa, setPedidoMapa] = useState<{ veiculo: Veiculo; pedido: Pedido } | null>(null);
 
   const pedidosComValidacao = pedidos.map((p) => ({
     ...p,
@@ -392,8 +411,21 @@ export function AbaPedidos({ pedidos, filtroStatus, filtroPrioridade, filtroPedi
   const uniq = (arr: string[]) => [...new Set(arr)].filter(Boolean).sort();
   const statusOpts = uniq(pedidos.map((p) => p.status));
 
+  function abrirMapaPedido(pedido: Pedido) {
+    const veiculo = VEICULOS.find((v) => v.placa === pedido.placa);
+    if (!veiculo) return;
+    setPedidoMapa({ veiculo, pedido });
+  }
+
   return (
     <div className="flex flex-col h-full">
+      {pedidoMapa && (
+        <ModalMapaVeiculo
+          veiculo={pedidoMapa.veiculo}
+          pedidoFoco={pedidoMapa.pedido}
+          onClose={() => setPedidoMapa(null)}
+        />
+      )}
       {/* Filtros */}
       <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-200 bg-gray-50 flex-wrap">
         <input
@@ -476,7 +508,13 @@ export function AbaPedidos({ pedidos, filtroStatus, filtroPrioridade, filtroPedi
           </thead>
           <tbody className="bg-white">
             {filtrados.map((p, index) => (
-              <LinhaPedido key={p.id} pedido={p} filtroStatus={filtroStatus} index={index + 1} />
+              <LinhaPedido
+                key={p.id}
+                pedido={p}
+                filtroStatus={filtroStatus}
+                index={index + 1}
+                onAbrirMapa={abrirMapaPedido}
+              />
             ))}
             <TotalRow>
               <td />

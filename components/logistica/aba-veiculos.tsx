@@ -946,16 +946,38 @@ function StreetMapMock({ markers }: { markers: TrackingMarkerMock[] }) {
   );
 }
 
-function ModalMapaVeiculoInner({ veiculo, onClose }: { veiculo: Veiculo; onClose: () => void }) {
+function ModalMapaVeiculoInner({
+  veiculo,
+  onClose,
+  pedidoFoco,
+}: {
+  veiculo: Veiculo;
+  onClose: () => void;
+  pedidoFoco?: Pedido;
+}) {
   const tarefaAtual = useMemo(() => getTarefaPrioritariaDoVeiculo(veiculo), [veiculo]);
-  const trackingMarkers = useMemo(() => montarTrackingMarkersMock(veiculo), [veiculo]);
+  const pedidoSelecionado = useMemo(() => {
+    if (!pedidoFoco) return null;
+    return veiculo.pedidos.find((pedido) => pedido.nPedido === pedidoFoco.nPedido) ?? pedidoFoco;
+  }, [pedidoFoco, veiculo]);
+  const trackingMarkersBase = useMemo(() => montarTrackingMarkersMock(veiculo), [veiculo]);
+  const trackingMarkers = useMemo(() => {
+    if (!pedidoSelecionado) return trackingMarkersBase;
+    return trackingMarkersBase.filter((marker) => {
+      if (marker.tipo !== "destino") return true;
+      const pertenceAoPedido = marker.pedidosCliente?.includes(pedidoSelecionado.nPedido);
+      const mesmoCliente = marker.nome === pedidoSelecionado.cliente;
+      return Boolean(pertenceAoPedido || mesmoCliente);
+    });
+  }, [trackingMarkersBase, pedidoSelecionado]);
   const origem = trackingMarkers.find((marker) => marker.tipo === "origem");
   const posicaoVeiculo = trackingMarkers.find((marker) => marker.tipo === "veiculo");
   const destinos = trackingMarkers.filter((marker) => marker.tipo === "destino");
   const pedidosDaTarefa = useMemo(() => {
+    if (pedidoSelecionado) return [pedidoSelecionado];
     if (!tarefaAtual) return veiculo.pedidos;
     return veiculo.pedidos.filter((pedido) => tarefaAtual.listaPedidos.includes(pedido.nPedido));
-  }, [tarefaAtual, veiculo]);
+  }, [pedidoSelecionado, tarefaAtual, veiculo]);
   const totaisPedidos = useMemo(
     () =>
       pedidosDaTarefa.reduce(
@@ -986,7 +1008,11 @@ function ModalMapaVeiculoInner({ veiculo, onClose }: { veiculo: Veiculo; onClose
         <div className="flex min-h-0 flex-col overflow-y-auto">
           <div className="px-4 pt-3 flex flex-wrap gap-2 text-[11px]">
             <span className="rounded bg-blue-50 border border-blue-200 px-2 py-1 text-blue-700">
-              {tarefaAtual ? `Tarefa ${tarefaAtual.idTarefa}` : "Sem tarefa em andamento"}
+              {pedidoSelecionado
+                ? `Pedido ${pedidoSelecionado.nPedido}`
+                : tarefaAtual
+                  ? `Tarefa ${tarefaAtual.idTarefa}`
+                  : "Sem tarefa em andamento"}
             </span>
             <span className="rounded bg-emerald-50 border border-emerald-200 px-2 py-1 text-emerald-700">
               Clientes no mapa: {destinos.length}
@@ -1050,7 +1076,9 @@ function ModalMapaVeiculoInner({ veiculo, onClose }: { veiculo: Veiculo; onClose
               <div className="bg-blue-700/10 px-3 py-1.5 border-b border-blue-200">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-[11px] font-semibold text-blue-800">
-                    Pedidos da tarefa {tarefaAtual ? tarefaAtual.idTarefa : veiculo.placa} ({pedidosDaTarefa.length})
+                    {pedidoSelecionado
+                      ? `Pedido ${pedidoSelecionado.nPedido} (${pedidosDaTarefa.length})`
+                      : `Pedidos da tarefa ${tarefaAtual ? tarefaAtual.idTarefa : veiculo.placa} (${pedidosDaTarefa.length})`}
                   </span>
                 </div>
               </div>
@@ -1083,7 +1111,9 @@ function ModalMapaVeiculoInner({ veiculo, onClose }: { veiculo: Veiculo; onClose
                     ) : (
                       <tr>
                         <td colSpan={10} className="px-4 py-3 text-center text-xs text-gray-400">
-                          Nenhum pedido disponível para esta tarefa.
+                          {pedidoSelecionado
+                            ? "Nenhum pedido disponível para este veículo."
+                            : "Nenhum pedido disponível para esta tarefa."}
                         </td>
                       </tr>
                     )}
@@ -1098,7 +1128,7 @@ function ModalMapaVeiculoInner({ veiculo, onClose }: { veiculo: Veiculo; onClose
   );
 }
 
-function ModalMapaVeiculo(props: { veiculo: Veiculo; onClose: () => void }) {
+export function ModalMapaVeiculo(props: { veiculo: Veiculo; onClose: () => void; pedidoFoco?: Pedido }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
   if (!mounted) return null;
@@ -1447,7 +1477,7 @@ export function AbaVeiculos({ veiculos, filtroStatus, filtroTransportadoraGlobal
             <TotalRow>
               <td />
               <td className="px-2 py-1.5 text-[11px] text-center text-gray-500">#</td>
-              <td className="px-2 py-1.5 text-[11px]" colSpan={11}>{filtrados.length} veículo(s)</td>
+              <td className="px-2 py-1.5 text-[11px]" colSpan={11}>{filtrados.length} de {veiculos.length} veiculos</td>
               <td className="px-2 py-1.5 text-[11px] text-center font-bold">{totalVolumesFiltrados.atual}/{totalVolumesFiltrados.total}</td>
               <td className="px-2 py-1.5 text-[11px] text-center font-bold">{filtrados.reduce((s, v) => s + v.qtdPedidos, 0)}</td>
               <td colSpan={3} />
