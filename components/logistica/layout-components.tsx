@@ -25,6 +25,8 @@ interface ColFilterThProps {
   className?: string;
 }
 
+const NONE_SELECTION_TOKEN = "__NONE_SELECTED__";
+
 export function ColFilterTh({
   label, sortKey, sortConfig, onSort,
   tooltip, values, selected, onFilterChange, className = "",
@@ -35,11 +37,14 @@ export function ColFilterTh({
   const [menuPos, setMenuPos] = useState<{ top: number; left: number; placeAbove: boolean; maxHeight: number } | null>(null);
 
   const active = sortConfig?.key === sortKey;
+  const isNoneSelected = selected.has(NONE_SELECTION_TOKEN);
+  const effectiveSelected = new Set([...selected].filter((v) => v !== NONE_SELECTION_TOKEN));
+  const selectedCount = isNoneSelected ? 0 : effectiveSelected.size;
   const hasFilter = selected.size > 0;
   const filtered = values.filter((v) => v.toLowerCase().includes(search.toLowerCase()));
 
   function toggle(val: string) {
-    const next = new Set(selected);
+    const next = new Set(effectiveSelected);
     if (next.has(val)) next.delete(val);
     else next.add(val);
     onFilterChange(next);
@@ -51,6 +56,10 @@ export function ColFilterTh({
 
   function selectOnly(val: string) {
     onFilterChange(new Set([val]));
+  }
+
+  function deselectAll() {
+    onFilterChange(new Set([NONE_SELECTION_TOKEN]));
   }
 
   useLayoutEffect(() => {
@@ -99,12 +108,12 @@ export function ColFilterTh({
                 ? "bg-blue-600 text-white"
                 : "text-gray-400 hover:bg-gray-100 hover:text-gray-700"
             }`}
-            title={hasFilter ? `${selected.size} filtro(s) ativo(s)` : "Filtrar coluna"}
+            title={hasFilter ? `${selectedCount} filtro(s) ativo(s)` : "Filtrar coluna"}
           >
             <Filter size={9} />
             {hasFilter && (
               <span className="absolute -top-1 -right-1 w-3 h-3 bg-blue-600 border border-white rounded-full text-[7px] flex items-center justify-center text-white font-bold">
-                {selected.size}
+                {selectedCount}
               </span>
             )}
           </button>
@@ -142,14 +151,12 @@ export function ColFilterTh({
                   >
                     Selecionar tudo
                   </button>
-                  {hasFilter && (
-                    <button
-                      onClick={selectAll}
-                      className="text-[10px] text-red-500 hover:underline"
-                    >
-                      Limpar
-                    </button>
-                  )}
+                  <button
+                    onClick={deselectAll}
+                    className="text-[10px] text-red-500 hover:underline"
+                  >
+                    Desmarcar tudo
+                  </button>
                 </div>
                 {/* Lista de valores */}
                 <div className="max-h-52 overflow-y-auto">
@@ -163,10 +170,10 @@ export function ColFilterTh({
                       >
                         <input
                           type="checkbox"
-                          checked={selected.size === 0 || selected.has(val)}
+                          checked={!isNoneSelected && (effectiveSelected.size === 0 || effectiveSelected.has(val))}
                           onChange={() => {
                             // Se estÃ¡ em "tudo selecionado" (set vazio), marcar só este = desselecionar os outros
-                            if (selected.size === 0) {
+                            if (effectiveSelected.size === 0 && !isNoneSelected) {
                               // Cria set com todos menos este
                               const todos = new Set(values.filter((v) => v !== val));
                               onFilterChange(todos);
@@ -176,7 +183,7 @@ export function ColFilterTh({
                           }}
                           className="accent-blue-600 w-3 h-3"
                         />
-                        <span className={`flex-1 text-[11px] truncate ${selected.has(val) || selected.size === 0 ? "text-gray-800" : "text-gray-400"}`}>
+                        <span className={`flex-1 text-[11px] truncate ${!isNoneSelected && (effectiveSelected.has(val) || effectiveSelected.size === 0) ? "text-gray-800" : "text-gray-400"}`}>
                           {val || "(vazio)"}
                         </span>
                         <button
@@ -192,7 +199,7 @@ export function ColFilterTh({
                 {/* Rodapé */}
                 {hasFilter && (
                   <div className="px-2.5 py-1.5 border-t border-gray-100 bg-blue-50 text-[10px] text-blue-700 font-medium">
-                    {selected.size} de {values.length} selecionado(s)
+                    {selectedCount} de {values.length} selecionado(s)
                   </div>
                 )}
               </div>
