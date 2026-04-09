@@ -113,7 +113,7 @@ function AbasPedido({ pedido, filtroStatus }: { pedido: Pedido; filtroStatus?: S
                   {item.qtdRessalva > 0 ? <span className="text-red-600 font-medium">{item.qtdRessalva}</span> : item.qtdRessalva}
                 </td>
                 <td className="px-2 py-1.5 ">{fmt(item.valorUnitario, "moeda")}</td>
-                <td className="px-2 py-1.5 text-right font-medium">{fmt(item.valorTotal, "moeda")}</td>
+                <td className="px-2 py-1.5 text-left font-medium">{fmt(item.valorTotal, "moeda")}</td>
               </tr>
             ))}
             <TotalRow>

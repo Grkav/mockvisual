@@ -1624,6 +1624,7 @@ export function AbaTarefas({ tarefas, filtroStatus, filtroOperacaoGlobal }: AbaT
               <td className="px-2 py-1.5 text-[11px] text-center font-bold">{filtrados.reduce((s, t) => s + t.nPedidos, 0)}</td>
               <td className="px-2 py-1.5 text-[11px] text-center font-bold">{totalVolumesFiltrados.atual}/{totalVolumesFiltrados.total}</td>
               <td />
+              <td />
               <td className="px-2 py-1.5 text-[11px]  font-bold">{fmt(filtrados.reduce((s, t) => s + t.peso, 0), "peso")}</td>
               <td className="px-2 py-1.5 text-[11px]  font-bold">{fmt(filtrados.reduce((s, t) => s + t.cubagem, 0), "cubagem")}</td>
               <td className="px-2 py-1.5 text-[11px]  font-bold">{fmt(filtrados.reduce((s, t) => s + t.valorTotal, 0), "moeda")}</td>
