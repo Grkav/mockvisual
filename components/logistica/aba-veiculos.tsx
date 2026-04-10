@@ -160,24 +160,37 @@ function AbasPedido({ pedido, filtroStatus }: { pedido: Pedido; filtroStatus?: S
           <thead className="bg-gray-50">
             <tr>
               <th className="px-3 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">#</th>
-              {["Tipo", "Motivo", "Criação", "Usuário", "Status", "FOTO"].map((h) => (
+              {["Tipo", "Motivo", "Criação", "Usuário", "Status", "TRATAMENTO", "FOTO"].map((h) => (
                 <th key={h} className="px-3 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {pedido.ressalvas.length === 0 ? (
-              <tr><td colSpan={7} className="px-3 py-4 text-center text-gray-400 text-xs">Nenhuma ressalva registrada</td></tr>
+              <tr><td colSpan={8} className="px-3 py-4 text-center text-gray-400 text-xs">Nenhuma ressalva registrada</td></tr>
             ) : pedido.ressalvas.map((r, index) => (
               <tr key={r.id} className="border-t border-gray-100 hover:bg-gray-50">
                 <td className="px-3 py-1.5 text-gray-500">{index + 1}</td>
-                <td className="px-3 py-1.5">{r.tipo}</td>
+                <td className="px-3 py-1.5">
+                  {pedido.tipoRessalva ? (
+                    <span
+                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                        pedido.tipoRessalva === "No Pedido" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"
+                      }`}
+                    >
+                      {pedido.tipoRessalva}
+                    </span>
+                  ) : (
+                    <span className="text-gray-300">--</span>
+                  )}
+                </td>
                 <td className="px-3 py-1.5">{r.descricao}</td>
                 <td className="px-3 py-1.5">{r.dataHora}</td>
                 <td className="px-3 py-1.5">{r.usuario}</td>
                 <td className="px-3 py-1.5">
                   <span className="px-1.5 py-0.5 rounded text-[10px] bg-red-100 text-red-700">{r.status}</span>
                 </td>
+                <td className="px-3 py-1.5">{r.dataHoraTratamento ?? "--"}</td>
                 <td className="px-3 py-1.5">
                   {r.temFoto ? (
                     <button

@@ -57,6 +57,7 @@ export interface Ressalva {
   dataHora: string;
   usuario: string;
   status: string;
+  dataHoraTratamento?: string;
   temFoto: boolean;
   arquivoFoto?: string;
 }
@@ -283,7 +284,12 @@ function makeRessalvas(pedidoId: string, tipo: TipoRessalva): Ressalva[] {
     P008: false,
     P011: true,
   };
+  const tratamentoPorPedido: Record<string, string | undefined> = {
+    P004: "2025-03-25 13:30",
+    P011: "2025-03-25 16:10",
+  };
   const temFoto = fotosPorPedido[pedidoId] ?? false;
+  const dataHoraTratamento = tratamentoPorPedido[pedidoId];
   return [
     {
       id: `RES-${pedidoId}-1`,
@@ -291,7 +297,8 @@ function makeRessalvas(pedidoId: string, tipo: TipoRessalva): Ressalva[] {
       descricao: tipo === "No Pedido" ? "Ninguém está presente para recebimento" : "Item com avaria no transporte",
       dataHora: "2025-03-25 11:15",
       usuario: "Carlos Rocha",
-      status: "Aberta",
+      status: dataHoraTratamento ? "Tratada" : "Aberta",
+      dataHoraTratamento,
       temFoto,
       arquivoFoto: temFoto ? `foto_ressalva_${pedidoId}.jpg` : undefined,
     },
