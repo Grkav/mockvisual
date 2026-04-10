@@ -291,7 +291,7 @@ function ModalPedidosParada({
                                 <thead className="bg-gray-50">
                                   <tr>
                                     <th className="px-3 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">#</th>
-                                    {["Tipo", "Descrição", "Data/Hora", "Usuário", "Status", "FOTO"].map((h) => (
+                                    {["Tipo", "Motivo", "Criação", "Usuário", "Status", "FOTO"].map((h) => (
                                       <th key={h} className="px-3 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">{h}</th>
                                     ))}
                                   </tr>
@@ -1096,7 +1096,7 @@ function ModalPedidoTarefa({ pedido, onClose }: { pedido: Pedido; onClose: () =>
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-3 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">#</th>
-                      {["Tipo", "Descrição", "Data/Hora", "Usuário", "Status", "FOTO"].map((h) => (
+                      {["Tipo", "Motivo", "Criação", "Usuário", "Status", "FOTO"].map((h) => (
                         <th key={h} className="px-3 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">{h}</th>
                       ))}
                     </tr>
