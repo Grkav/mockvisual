@@ -253,15 +253,22 @@ function makeComprovantes(pedidoId: string, tem: boolean): Comprovante[] {
   return [
     {
       id: `COMP-${pedidoId}-1`,
-      tipo: "Canhoto",
-      arquivo: `canhoto_${pedidoId}.pdf`,
+      tipo: "Foto",
+      arquivo: `foto_entrega_${pedidoId}.jpg`,
       dataHora: "2025-03-25 10:42",
       usuario: "João Silva",
     },
     {
       id: `COMP-${pedidoId}-2`,
-      tipo: "Foto",
-      arquivo: `foto_entrega_${pedidoId}.jpg`,
+      tipo: "Assinatura",
+      arquivo: `assinatura_${pedidoId}.pdf`,
+      dataHora: "2025-03-25 10:44",
+      usuario: "João Silva",
+    },
+    {
+      id: `COMP-${pedidoId}-3`,
+      tipo: "Biometria Facial",
+      arquivo: `biometria_facial_${pedidoId}.jpg`,
       dataHora: "2025-03-25 10:45",
       usuario: "João Silva",
     },
@@ -623,4 +630,3 @@ export function calcularCards(pedidos: Pedido[]): CardStatus[] {
     { label: "Cancelado", count: contagem("Cancelado"), color: "text-zinc-700", bgColor: "bg-zinc-100", borderColor: "border-zinc-300" },
   ];
 }
-

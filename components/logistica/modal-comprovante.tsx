@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import {
   X, Download, Pencil, Save, RotateCcw, ZoomIn, ZoomOut,
   RotateCw, ChevronLeft, ChevronRight, FileText, Image as ImageIcon,
-  Check, AlertCircle,
+  Check, User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Comprovante } from "@/lib/mock-data";
@@ -17,6 +17,31 @@ interface ModalComprovanteProps {
   indiceInicial?: number;
   pedidoNum: string;
   onClose: () => void;
+}
+
+const TIPOS_COMPROVANTE = ["Foto", "Assinatura", "Biometria Facial"] as const;
+type TipoComprovanteValido = (typeof TIPOS_COMPROVANTE)[number];
+
+function normalizarTipoComprovante(tipo: string): TipoComprovanteValido {
+  const valor = tipo.trim().toLowerCase();
+  if (valor.includes("biometr")) return "Biometria Facial";
+  if (valor.includes("assin") || valor.includes("canhoto")) return "Assinatura";
+  return "Foto";
+}
+
+function TipoComprovanteIcone({
+  tipo,
+  size = 12,
+  className = "",
+}: {
+  tipo: string;
+  size?: number;
+  className?: string;
+}) {
+  const tipoNormalizado = normalizarTipoComprovante(tipo);
+  if (tipoNormalizado === "Assinatura") return <Pencil size={size} className={className} />;
+  if (tipoNormalizado === "Biometria Facial") return <User size={size} className={className} />;
+  return <ImageIcon size={size} className={className} />;
 }
 
 // ─── Preview do arquivo (PDF simulado ou imagem) ──────────────────────────────
@@ -72,9 +97,9 @@ function PreviewArquivo({
         ) : (
           /* Imagem simulada */
           <div className="w-[380px] h-[280px] bg-gradient-to-br from-slate-200 to-slate-300 rounded shadow-xl border border-gray-200 flex flex-col items-center justify-center gap-3 relative overflow-hidden">
-            <ImageIcon size={40} className="text-slate-400" />
+            <TipoComprovanteIcone tipo={comprovante.tipo} size={40} className="text-slate-400" />
             <p className="text-xs text-slate-500 font-medium">{comprovante.arquivo}</p>
-            <p className="text-[10px] text-slate-400">Foto de Entrega</p>
+            <p className="text-[10px] text-slate-400">{normalizarTipoComprovante(comprovante.tipo)}</p>
             {/* Marca d'água simulada */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
               <p
@@ -110,7 +135,7 @@ function PainelEdicao({
   onCancel: () => void;
 }) {
   const [campos, setCampos] = useState<CamposEdicao>({
-    tipo: comprovante.tipo,
+    tipo: normalizarTipoComprovante(comprovante.tipo),
     dataHora: comprovante.dataHora,
     usuario: comprovante.usuario,
     observacao: "",
@@ -135,7 +160,7 @@ function PainelEdicao({
           onChange={(e) => setCampos({ ...campos, tipo: e.target.value })}
           className="w-full h-8 px-2 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
         >
-          {["Canhoto", "Foto", "NF Assinada", "Declaração", "Outro"].map((op) => (
+          {TIPOS_COMPROVANTE.map((op) => (
             <option key={op}>{op}</option>
           ))}
         </select>
@@ -253,7 +278,7 @@ function ModalComprovanteInner({
         <div className="flex items-center justify-between px-5 py-3 bg-[#1a3c6e] text-white flex-shrink-0">
           <div>
             <h2 className="text-sm font-semibold">Comprovante de Entrega</h2>
-            <p className="text-blue-200 text-[11px]">Pedido {pedidoNum} &nbsp;·&nbsp; {comprovante.tipo} &nbsp;·&nbsp; {comprovante.arquivo}</p>
+            <p className="text-blue-200 text-[11px]">Pedido {pedidoNum} &nbsp;·&nbsp; {normalizarTipoComprovante(comprovante.tipo)} &nbsp;·&nbsp; {comprovante.arquivo}</p>
           </div>
           <button onClick={onClose} className="text-blue-200 hover:text-white transition-colors">
             <X size={18} />
@@ -366,7 +391,7 @@ function ModalComprovanteInner({
                   <p className="text-[10px] font-semibold text-gray-500 uppercase mb-2">Informações</p>
                   <div className="space-y-2">
                     {[
-                      { label: "Tipo", value: comprovante.tipo },
+                      { label: "Tipo", value: normalizarTipoComprovante(comprovante.tipo) },
                       { label: "Arquivo", value: comprovante.arquivo },
                       { label: "Data / Hora", value: comprovante.dataHora },
                       { label: "Usuário", value: comprovante.usuario },
@@ -396,12 +421,8 @@ function ModalComprovanteInner({
                               : "hover:bg-gray-200 text-gray-700"
                           }`}
                         >
-                          {c.arquivo.endsWith(".pdf") ? (
-                            <FileText size={12} className="flex-shrink-0" />
-                          ) : (
-                            <ImageIcon size={12} className="flex-shrink-0" />
-                          )}
-                          <span className="truncate">{c.tipo}</span>
+                          <TipoComprovanteIcone tipo={c.tipo} size={12} className="flex-shrink-0" />
+                          <span className="truncate">{normalizarTipoComprovante(c.tipo)}</span>
                         </button>
                       ))}
                     </div>

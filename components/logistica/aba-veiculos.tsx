@@ -82,7 +82,7 @@ function AbasPedido({ pedido, filtroStatus }: { pedido: Pedido; filtroStatus?: S
           <thead className="bg-gray-50">
             <tr>
               <th className="px-2 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">#</th>
-              {["ID", "ID Externo", "Produto", "Lote", "Validade", "Qtd Sol.", "Qtd Emb.", "Qtd Entregue", "Qtd Ressalva", "Vlr Unit.", "Vlr Total"].map((h) => (
+              {["ID", "ID Externo", "Produto", "Lote", "Validade", "Qtd Sol.", "Qtd. Devolvida", "Qtd Entregue", "Qtd Ressalva", "Vlr Unit.", "Vlr Total"].map((h) => (
                 <th key={h} className="px-2 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">{h}</th>
               ))}
             </tr>
