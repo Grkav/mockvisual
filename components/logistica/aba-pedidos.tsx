@@ -56,7 +56,7 @@ function AbasPedido({ pedido, filtroStatus }: { pedido: Pedido; filtroStatus?: S
           <thead className="bg-gray-50">
             <tr>
               <th className="px-3 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">#</th>
-              {["Nº Pedido", "Cliente", "Tarefa/Retirada", "Nº Volume", "Hora Embarque", "Hora Desembarque", "Hora Entrega", "Rota"].map((h) => (
+              {["Tarefa/Retirada", "Nº Volume", "Hora Embarque", "Hora Desembarque", "Hora Entrega", "Rota"].map((h) => (
                 <th key={h} className="px-3 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">{h}</th>
               ))}
             </tr>
@@ -74,8 +74,6 @@ function AbasPedido({ pedido, filtroStatus }: { pedido: Pedido; filtroStatus?: S
               .map((v, index) => (
                 <tr key={v.id} className="border-t border-gray-100 hover:bg-gray-50">
                   <td className="px-3 py-1.5 text-gray-500">{index + 1}</td>
-                  <td className="px-3 py-1.5">{pedido.nPedido}</td>
-                  <td className="px-3 py-1.5">{pedido.cliente}</td>
                   <td className="px-3 py-1.5">{v.tarefaRetirada}</td>
                   <td className="px-3 py-1.5 font-mono text-[10px]">{v.nVolume}</td>
                   <td className="px-3 py-1.5">{v.horaEmbarque}</td>
