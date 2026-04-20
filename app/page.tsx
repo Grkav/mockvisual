@@ -26,6 +26,14 @@ export default function AcompanhamentoPage() {
   const [cardsAtivos, setCardsAtivos] = useState<StatusPedido[]>([]);
   const [abaAtiva, setAbaAtiva] = useState<AbaAtiva>("pedidos");
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
+    if (tab === "veiculos" || tab === "pedidos" || tab === "tarefas") {
+      setAbaAtiva(tab);
+    }
+  }, []);
+
   const handleCardClick = (status: StatusPedido | null) => {
     if (!status) {
       setCardsAtivos([]);

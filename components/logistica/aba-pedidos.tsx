@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ChevronRight, ChevronDown, Download, CameraOff, Power, ClipboardCheck, AlertTriangle } from "lucide-react";
 import type { Pedido, StatusPedido, Comprovante, Veiculo } from "@/lib/mock-data";
 import { VEICULOS, isPedidoParcialmenteEmbarcado } from "@/lib/mock-data";
@@ -376,6 +376,7 @@ export function AbaPedidos({ pedidos, filtroStatus, filtroPrioridade, filtroPedi
   const [filtroRessalva, setFiltroRessalva] = useState("");
   const [filtroComprovante, setFiltroComprovante] = useState("");
   const [pedidoMapa, setPedidoMapa] = useState<{ veiculo: Veiculo; pedido: Pedido } | null>(null);
+  const autoOpenHandledRef = useRef(false);
 
   const pedidosComValidacao = pedidos.map((p) => ({
     ...p,
@@ -422,10 +423,34 @@ export function AbaPedidos({ pedidos, filtroStatus, filtroPrioridade, filtroPedi
   const uniq = (arr: string[]) => [...new Set(arr)].filter(Boolean).sort();
   const statusOpts = uniq(pedidos.map((p) => p.status));
 
-  function abrirMapaPedido(pedido: Pedido) {
-    const veiculo = VEICULOS.find((v) => v.placa === pedido.placa);
+  useEffect(() => {
+    if (autoOpenHandledRef.current) return;
+    autoOpenHandledRef.current = true;
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("modal") !== "veiculo") return;
+    const tab = params.get("tab");
+    if (tab && tab !== "pedidos") return;
+
+    const pedidoParam = params.get("pedido");
+    const placaParam = params.get("placa");
+    const pedidoAlvo =
+      (pedidoParam ? pedidos.find((p) => p.nPedido === pedidoParam) : null) ??
+      (placaParam ? pedidos.find((p) => p.placa === placaParam) : null);
+
+    if (!pedidoAlvo) return;
+    const veiculo = VEICULOS.find((v) => v.placa === pedidoAlvo.placa);
     if (!veiculo) return;
-    setPedidoMapa({ veiculo, pedido });
+    setPedidoMapa({ veiculo, pedido: pedidoAlvo });
+  }, [pedidos]);
+
+  function abrirMapaPedido(pedido: Pedido) {
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", "pedidos");
+    url.searchParams.set("modal", "veiculo");
+    url.searchParams.set("placa", pedido.placa);
+    url.searchParams.set("pedido", pedido.nPedido);
+    window.open(url.toString(), "_blank", "noopener,noreferrer");
   }
 
   return (

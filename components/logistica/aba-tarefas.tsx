@@ -1505,6 +1505,7 @@ export function AbaTarefas({ tarefas, filtroStatus, filtroOperacaoGlobal }: AbaT
   const [timelineOverrides, setTimelineOverrides] = useState<Record<string, ParadaTimeline[]>>({});
   const [deslocamentoOverrides, setDeslocamentoOverrides] = useState<Record<string, Tarefa["deslocamentos"]>>({});
   const [veiculoMapa, setVeiculoMapa] = useState<(typeof VEICULOS)[number] | null>(null);
+  const autoOpenHandledRef = useRef(false);
   const ordemPorVeiculo = (() => {
     const contadorPorVeiculo = new Map<string, number>();
     const ordemPorId = new Map<string, number>();
@@ -1585,6 +1586,22 @@ export function AbaTarefas({ tarefas, filtroStatus, filtroOperacaoGlobal }: AbaT
     { atual: 0, total: 0 }
   );
 
+  useEffect(() => {
+    if (autoOpenHandledRef.current) return;
+    autoOpenHandledRef.current = true;
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("modal") !== "veiculo") return;
+    const tab = params.get("tab");
+    if (tab && tab !== "tarefas") return;
+
+    const placa = params.get("placa");
+    if (!placa) return;
+    const veiculo = VEICULOS.find((v) => v.placa === placa);
+    if (!veiculo) return;
+    setVeiculoMapa(veiculo);
+  }, []);
+
   function abrirModalOrdem(t: Tarefa) {
     const base = buildTimelineBase(t);
     const clientes = base.filter((p) => p.tipo !== "galpao").map((p) => p.nome);
@@ -1621,9 +1638,12 @@ export function AbaTarefas({ tarefas, filtroStatus, filtroOperacaoGlobal }: AbaT
   }
 
   function abrirMapaPorPlaca(placa: string) {
-    const veiculo = VEICULOS.find((v) => v.placa === placa);
-    if (!veiculo) return;
-    setVeiculoMapa(veiculo);
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", "tarefas");
+    url.searchParams.set("modal", "veiculo");
+    url.searchParams.set("placa", placa);
+    url.searchParams.delete("pedido");
+    window.open(url.toString(), "_blank", "noopener,noreferrer");
   }
 
   return (

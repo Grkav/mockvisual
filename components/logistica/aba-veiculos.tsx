@@ -1048,6 +1048,25 @@ function ModalMapaVeiculoInner({
   onClose: () => void;
   pedidoFoco?: Pedido;
 }) {
+  useEffect(() => {
+    const tituloAnterior = document.title;
+    const aplicarTituloPlaca = () => {
+      if (document.title !== veiculo.placa) {
+        document.title = veiculo.placa;
+      }
+    };
+
+    aplicarTituloPlaca();
+    const rafId = window.requestAnimationFrame(aplicarTituloPlaca);
+    const intervalId = window.setInterval(aplicarTituloPlaca, 500);
+
+    return () => {
+      window.cancelAnimationFrame(rafId);
+      window.clearInterval(intervalId);
+      document.title = tituloAnterior;
+    };
+  }, [veiculo.placa]);
+
   const tarefaAtual = useMemo(() => getTarefaPrioritariaDoVeiculo(veiculo), [veiculo]);
   const pedidosDoVeiculo = useMemo(
     () => [...veiculo.pedidos].sort((a, b) => a.nPedido.localeCompare(b.nPedido)),
@@ -1709,6 +1728,23 @@ export function AbaVeiculos({ veiculos, filtroStatus, filtroTransportadoraGlobal
   const [filtroRessalva, setFiltroRessalva] = useState("");
   const [filtroComprovante, setFiltroComprovante] = useState("");
   const [veiculoMapa, setVeiculoMapa] = useState<Veiculo | null>(null);
+  const autoOpenHandledRef = useRef(false);
+
+  useEffect(() => {
+    if (autoOpenHandledRef.current) return;
+    autoOpenHandledRef.current = true;
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("modal") !== "veiculo") return;
+    const tab = params.get("tab");
+    if (tab && tab !== "veiculos") return;
+
+    const placa = params.get("placa");
+    if (!placa) return;
+    const veiculo = veiculos.find((v) => v.placa === placa);
+    if (!veiculo) return;
+    setVeiculoMapa(veiculo);
+  }, [veiculos]);
 
   const veiculosComValidacao = veiculos.map((v) => {
     const volumeEmbarcadoTotal = v.pedidos.reduce((s, p) => s + p.qtdVolumesTotal, 0);
@@ -1774,6 +1810,14 @@ export function AbaVeiculos({ veiculos, filtroStatus, filtroTransportadoraGlobal
   );
 
   const uniq = (arr: string[]) => [...new Set(arr)].filter(Boolean).sort();
+  function abrirMapaEmNovaAba(veiculo: Veiculo) {
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", "veiculos");
+    url.searchParams.set("modal", "veiculo");
+    url.searchParams.set("placa", veiculo.placa);
+    url.searchParams.delete("pedido");
+    window.open(url.toString(), "_blank", "noopener,noreferrer");
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -1853,7 +1897,7 @@ export function AbaVeiculos({ veiculos, filtroStatus, filtroTransportadoraGlobal
                 veiculo={v}
                 filtroStatus={filtroStatus}
                 index={index + 1}
-                onAbrirMapa={setVeiculoMapa}
+                onAbrirMapa={abrirMapaEmNovaAba}
               />
             ))}
             <TotalRow>
