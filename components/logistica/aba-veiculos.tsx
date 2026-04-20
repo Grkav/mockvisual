@@ -1,8 +1,8 @@
 ﻿"use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { ChevronRight, ChevronDown, Download, X, CameraOff, Truck, Package, Warehouse, AlertTriangle } from "lucide-react";
+import { ChevronRight, ChevronDown, Download, X, CameraOff, Truck, Package, Warehouse, AlertTriangle, RefreshCw } from "lucide-react";
 import { ModalComprovante } from "@/components/logistica/modal-comprovante";
 import type { Veiculo, Pedido, StatusPedido, Tarefa } from "@/lib/mock-data";
 import { TAREFAS, isPedidoParcialmenteEmbarcado } from "@/lib/mock-data";
@@ -323,7 +323,15 @@ function LinhaPedidoVeiculo({
   );
 }
 
-function LinhaPedidoModalMapa({ pedido, index }: { pedido: Pedido; index: number }) {
+function LinhaPedidoModalMapa({
+  pedido,
+  index,
+  nested = false,
+}: {
+  pedido: Pedido;
+  index: number;
+  nested?: boolean;
+}) {
   const [expandido, setExpandido] = useState(false);
   const ressalvaSemFoto = Boolean(
     pedido.tipoRessalva &&
@@ -336,13 +344,17 @@ function LinhaPedidoModalMapa({ pedido, index }: { pedido: Pedido; index: number
         onClick={() => setExpandido(!expandido)}
         className={`border-t border-gray-100 cursor-pointer transition-colors ${expandido ? "bg-blue-50" : "hover:bg-gray-50"}`}
       >
-        <td className="pl-3 pr-1 py-2 w-7">
+        <td className={`pr-1 py-2 w-7 ${nested ? "pl-6" : "pl-3"}`}>
           <button className="text-gray-400 hover:text-blue-600">
             {expandido ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
           </button>
         </td>
         <td className="px-3 py-2 text-gray-500">{index}</td>
-        <td className="px-3 py-2 text-blue-700 font-semibold">{pedido.nPedido}</td>
+        <td className="px-3 py-2">
+          <div className={`${nested ? "pl-1" : ""}`}>
+            <span className="text-blue-700 font-semibold">{pedido.nPedido}</span>
+          </div>
+        </td>
         <td className="px-3 py-2 text-gray-500">{pedido.nRemessa}</td>
         <td className="px-3 py-2"><StatusBadge status={pedido.status} /></td>
         <td className="px-3 py-2 text-center">{`${pedido.qtdVolumes}/${pedido.qtdVolumesTotal}`}</td>
@@ -360,11 +372,79 @@ function LinhaPedidoModalMapa({ pedido, index }: { pedido: Pedido; index: number
       </tr>
       {expandido && (
         <tr>
-          <td colSpan={10} className="px-4 pb-3 bg-blue-50/30">
+          <td colSpan={10} className={`${nested ? "px-8 pb-3 bg-blue-50/30" : "px-4 pb-3 bg-blue-50/30"}`}>
             <AbasPedido pedido={pedido} />
           </td>
         </tr>
       )}
+    </>
+  );
+}
+
+function LinhaClienteModalMapa({
+  cliente,
+  pedidos,
+  index,
+}: {
+  cliente: string;
+  pedidos: Pedido[];
+  index: number;
+}) {
+  const [expandido, setExpandido] = useState(false);
+  const totaisCliente = useMemo(
+    () =>
+      pedidos.reduce(
+        (acc, pedido) => {
+          acc.volumes += pedido.qtdVolumes;
+          acc.volumesTotal += pedido.qtdVolumesTotal;
+          acc.peso += pedido.peso;
+          acc.cubagem += pedido.cubagem;
+          acc.valor += pedido.valorTotal;
+          acc.ressalvas += pedido.tipoRessalva ? 1 : 0;
+          return acc;
+        },
+        { volumes: 0, volumesTotal: 0, peso: 0, cubagem: 0, valor: 0, ressalvas: 0 }
+      ),
+    [pedidos]
+  );
+
+  return (
+    <>
+      <tr
+        onClick={() => setExpandido(!expandido)}
+        className={`border-t border-gray-100 cursor-pointer transition-colors ${expandido ? "bg-blue-50/60" : "hover:bg-gray-50"}`}
+      >
+        <td className="pl-3 pr-1 py-2 w-7">
+          <button className="text-gray-400 hover:text-blue-600">
+            {expandido ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+          </button>
+        </td>
+        <td className="px-3 py-2 text-gray-500 font-medium">{index}</td>
+        <td className="px-3 py-2 font-semibold text-blue-700">{cliente}</td>
+        <td className="px-3 py-2 text-gray-600">{pedidos.length} pedido(s)</td>
+        <td className="px-3 py-2">
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700">
+            Cliente
+          </span>
+        </td>
+        <td className="px-3 py-2 text-center font-medium">{`${totaisCliente.volumes}/${totaisCliente.volumesTotal}`}</td>
+        <td className="px-3 py-2 font-medium">{fmt(totaisCliente.peso, "peso")}</td>
+        <td className="px-3 py-2 font-medium">{fmt(totaisCliente.cubagem, "cubagem")}</td>
+        <td className="px-3 py-2 font-semibold">{fmt(totaisCliente.valor, "moeda")}</td>
+        <td className="px-3 py-2">
+          {totaisCliente.ressalvas > 0 ? (
+            <span className="inline-flex items-center rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-medium text-orange-700">
+              {totaisCliente.ressalvas} com ressalva
+            </span>
+          ) : (
+            <span className="text-gray-300">--</span>
+          )}
+        </td>
+      </tr>
+      {expandido &&
+        pedidos.map((pedido, pedidoIndex) => (
+          <LinhaPedidoModalMapa key={pedido.id} pedido={pedido} index={pedidoIndex + 1} nested />
+        ))}
     </>
   );
 }
@@ -522,7 +602,7 @@ function getEnderecoAtualVeiculoMock(veiculo: Veiculo, tarefa: Tarefa | null): s
   return getLocalizacaoFicticia(galpaoOperacao, veiculo, 92).endereco;
 }
 
-function montarTrackingMarkersMock(veiculo: Veiculo): TrackingMarkerMock[] {
+function montarTrackingMarkersMock(veiculo: Veiculo, pedidosBase?: Pedido[]): TrackingMarkerMock[] {
   const cor = COR_OPERACAO_MOCK[veiculo.operacao] ?? "#1E3C7D";
   const tarefa = getTarefaPrioritariaDoVeiculo(veiculo);
   const enderecoAtualVeiculo = getEnderecoAtualVeiculoMock(veiculo, tarefa);
@@ -569,12 +649,14 @@ function montarTrackingMarkersMock(veiculo: Veiculo): TrackingMarkerMock[] {
     },
   ];
 
-  const pedidosDaTarefa = tarefa
-    ? veiculo.pedidos.filter((pedido) => tarefa.listaPedidos.includes(pedido.nPedido))
-    : veiculo.pedidos;
+  const pedidosDaRota = pedidosBase ?? (
+    tarefa
+      ? veiculo.pedidos.filter((pedido) => tarefa.listaPedidos.includes(pedido.nPedido))
+      : veiculo.pedidos
+  );
 
   const pedidosPorCliente = new Map<string, Pedido[]>();
-  for (const pedido of pedidosDaTarefa) {
+  for (const pedido of pedidosDaRota) {
     const listaCliente = pedidosPorCliente.get(pedido.cliente) ?? [];
     pedidosPorCliente.set(pedido.cliente, [...listaCliente, pedido]);
   }
@@ -967,31 +1049,158 @@ function ModalMapaVeiculoInner({
   pedidoFoco?: Pedido;
 }) {
   const tarefaAtual = useMemo(() => getTarefaPrioritariaDoVeiculo(veiculo), [veiculo]);
-  const pedidoSelecionado = useMemo(() => {
+  const pedidosDoVeiculo = useMemo(
+    () => [...veiculo.pedidos].sort((a, b) => a.nPedido.localeCompare(b.nPedido)),
+    [veiculo]
+  );
+  const clientesDoVeiculo = useMemo(
+    () => [...new Set(pedidosDoVeiculo.map((pedido) => pedido.cliente))].sort((a, b) => a.localeCompare(b)),
+    [pedidosDoVeiculo]
+  );
+  const pedidoFocoNoVeiculo = useMemo(() => {
     if (!pedidoFoco) return null;
-    return veiculo.pedidos.find((pedido) => pedido.nPedido === pedidoFoco.nPedido) ?? pedidoFoco;
-  }, [pedidoFoco, veiculo]);
-  const trackingMarkersBase = useMemo(() => montarTrackingMarkersMock(veiculo), [veiculo]);
+    return pedidosDoVeiculo.find((pedido) => pedido.nPedido === pedidoFoco.nPedido) ?? null;
+  }, [pedidoFoco, pedidosDoVeiculo]);
+  const [dropdownPedidosAberto, setDropdownPedidosAberto] = useState(false);
+  const dropdownPedidosRef = useRef<HTMLDivElement | null>(null);
+  const [dropdownClientesAberto, setDropdownClientesAberto] = useState(false);
+  const dropdownClientesRef = useRef<HTMLDivElement | null>(null);
+  const [pedidosSelecionados, setPedidosSelecionados] = useState<string[]>([]);
+  const [clientesSelecionados, setClientesSelecionados] = useState<string[]>([]);
+  const [autoAtualizarModal, setAutoAtualizarModal] = useState(false);
+  const [autoCountdownModal, setAutoCountdownModal] = useState(30);
+  const [lastUpdateModal, setLastUpdateModal] = useState("");
+
+  const handleAtualizarModal = useCallback(() => {
+    setLastUpdateModal(
+      new Date().toLocaleString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })
+    );
+  }, []);
+
+  useEffect(() => {
+    if (pedidoFocoNoVeiculo) {
+      setClientesSelecionados([pedidoFocoNoVeiculo.cliente]);
+      setPedidosSelecionados([pedidoFocoNoVeiculo.nPedido]);
+      return;
+    }
+    setClientesSelecionados(clientesDoVeiculo);
+    setPedidosSelecionados(pedidosDoVeiculo.map((pedido) => pedido.nPedido));
+  }, [pedidoFocoNoVeiculo, pedidosDoVeiculo, clientesDoVeiculo]);
+
+  useEffect(() => {
+    handleAtualizarModal();
+  }, [handleAtualizarModal]);
+
+  useEffect(() => {
+    if (!autoAtualizarModal) {
+      setAutoCountdownModal(30);
+      return;
+    }
+
+    handleAtualizarModal();
+    setAutoCountdownModal(30);
+
+    const interval = setInterval(() => {
+      setAutoCountdownModal((prev) => {
+        if (prev <= 1) {
+          handleAtualizarModal();
+          return 30;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [autoAtualizarModal, handleAtualizarModal]);
+
+  useEffect(() => {
+    if (!dropdownPedidosAberto) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownPedidosRef.current?.contains(event.target as Node)) return;
+      setDropdownPedidosAberto(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [dropdownPedidosAberto]);
+
+  useEffect(() => {
+    if (!dropdownClientesAberto) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownClientesRef.current?.contains(event.target as Node)) return;
+      setDropdownClientesAberto(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [dropdownClientesAberto]);
+
+  const pedidosSelecionadosSet = useMemo(
+    () => new Set(pedidosSelecionados),
+    [pedidosSelecionados]
+  );
+  const clientesSelecionadosSet = useMemo(
+    () => new Set(clientesSelecionados),
+    [clientesSelecionados]
+  );
+  const filtroClientesAtivo = useMemo(
+    () => clientesSelecionadosSet.size > 0 && clientesSelecionadosSet.size < clientesDoVeiculo.length,
+    [clientesSelecionadosSet, clientesDoVeiculo]
+  );
+  const clientesSelecionadosDetalhe = useMemo(
+    () => clientesDoVeiculo.filter((cliente) => clientesSelecionadosSet.has(cliente)),
+    [clientesDoVeiculo, clientesSelecionadosSet]
+  );
+  const pedidosSelecionadosDetalhe = useMemo(
+    () =>
+      pedidosDoVeiculo.filter(
+        (pedido) =>
+          pedidosSelecionadosSet.has(pedido.nPedido) &&
+          (!filtroClientesAtivo || clientesSelecionadosSet.has(pedido.cliente))
+      ),
+    [pedidosDoVeiculo, pedidosSelecionadosSet, clientesSelecionadosSet, filtroClientesAtivo]
+  );
+  const gruposClientesPedidos = useMemo(() => {
+    const mapa = new Map<string, Pedido[]>();
+    for (const pedido of pedidosSelecionadosDetalhe) {
+      const listaCliente = mapa.get(pedido.cliente) ?? [];
+      listaCliente.push(pedido);
+      mapa.set(pedido.cliente, listaCliente);
+    }
+    return [...mapa.entries()]
+      .map(([cliente, pedidos]) => ({
+        cliente,
+        pedidos: [...pedidos].sort((a, b) => a.nPedido.localeCompare(b.nPedido)),
+      }))
+      .sort((a, b) => a.cliente.localeCompare(b.cliente));
+  }, [pedidosSelecionadosDetalhe]);
+  const trackingMarkersBase = useMemo(
+    () => montarTrackingMarkersMock(veiculo, pedidosDoVeiculo),
+    [veiculo, pedidosDoVeiculo]
+  );
   const trackingMarkers = useMemo(() => {
-    if (!pedidoSelecionado) return trackingMarkersBase;
     return trackingMarkersBase.filter((marker) => {
       if (marker.tipo !== "destino") return true;
-      const pertenceAoPedido = marker.pedidosCliente?.includes(pedidoSelecionado.nPedido);
-      const mesmoCliente = marker.nome === pedidoSelecionado.cliente;
-      return Boolean(pertenceAoPedido || mesmoCliente);
+      if (pedidosSelecionadosSet.size === 0 || clientesSelecionadosSet.size === 0) return false;
+      const pertenceAoPedidoSelecionado =
+        marker.pedidosCliente?.some((pedidoNum) => pedidosSelecionadosSet.has(pedidoNum)) ?? false;
+      if (!pertenceAoPedidoSelecionado) return false;
+      if (!filtroClientesAtivo) return true;
+      const clienteSelecionado = clientesSelecionadosSet.has(marker.nome);
+      return clienteSelecionado;
     });
-  }, [trackingMarkersBase, pedidoSelecionado]);
+  }, [trackingMarkersBase, pedidosSelecionadosSet, clientesSelecionadosSet, filtroClientesAtivo]);
   const origem = trackingMarkers.find((marker) => marker.tipo === "origem");
   const posicaoVeiculo = trackingMarkers.find((marker) => marker.tipo === "veiculo");
   const destinos = trackingMarkers.filter((marker) => marker.tipo === "destino");
-  const pedidosDaTarefa = useMemo(() => {
-    if (pedidoSelecionado) return [pedidoSelecionado];
-    if (!tarefaAtual) return veiculo.pedidos;
-    return veiculo.pedidos.filter((pedido) => tarefaAtual.listaPedidos.includes(pedido.nPedido));
-  }, [pedidoSelecionado, tarefaAtual, veiculo]);
   const totaisPedidos = useMemo(
     () =>
-      pedidosDaTarefa.reduce(
+      pedidosSelecionadosDetalhe.reduce(
         (acc, pedido) => {
           acc.volumes += pedido.qtdVolumes;
           acc.volumesTotal += pedido.qtdVolumesTotal;
@@ -1002,8 +1211,50 @@ function ModalMapaVeiculoInner({
         },
         { volumes: 0, volumesTotal: 0, peso: 0, cubagem: 0, valor: 0 }
       ),
-    [pedidosDaTarefa]
+    [pedidosSelecionadosDetalhe]
   );
+  const resumoPedidosSelecionados = useMemo(() => {
+    if (pedidosSelecionadosDetalhe.length === 0) return "Nenhum pedido selecionado";
+    if (pedidosSelecionadosDetalhe.length === 1) return `Pedido ${pedidosSelecionadosDetalhe[0].nPedido}`;
+    return `${pedidosSelecionadosDetalhe.length} pedidos selecionados`;
+  }, [pedidosSelecionadosDetalhe]);
+  const resumoClientesSelecionados = useMemo(() => {
+    if (clientesSelecionadosDetalhe.length === 0) return "Nenhum cliente selecionado";
+    if (clientesSelecionadosDetalhe.length === 1) return clientesSelecionadosDetalhe[0];
+    return `${clientesSelecionadosDetalhe.length} clientes selecionados`;
+  }, [clientesSelecionadosDetalhe]);
+
+  function aplicarFiltroPedidos(proximosPedidos: string[]) {
+    setPedidosSelecionados(proximosPedidos);
+    const setPedidos = new Set(proximosPedidos);
+    const clientesComPedidoSelecionado = clientesDoVeiculo.filter((cliente) =>
+      pedidosDoVeiculo.some((pedido) => pedido.cliente === cliente && setPedidos.has(pedido.nPedido))
+    );
+    setClientesSelecionados(clientesComPedidoSelecionado);
+  }
+
+  function alternarPedidoSelecionado(pedidoNum: string) {
+    const proximosPedidos = pedidosSelecionados.includes(pedidoNum)
+      ? pedidosSelecionados.filter((num) => num !== pedidoNum)
+      : [...pedidosSelecionados, pedidoNum];
+    aplicarFiltroPedidos(proximosPedidos);
+  }
+
+  function aplicarFiltroClientes(proximosClientes: string[]) {
+    setClientesSelecionados(proximosClientes);
+    const setClientes = new Set(proximosClientes);
+    const pedidosDoCliente = pedidosDoVeiculo
+      .filter((pedido) => setClientes.has(pedido.cliente))
+      .map((pedido) => pedido.nPedido);
+    setPedidosSelecionados(pedidosDoCliente);
+  }
+
+  function alternarClienteSelecionado(cliente: string) {
+    const proximosClientes = clientesSelecionados.includes(cliente)
+      ? clientesSelecionados.filter((nome) => nome !== cliente)
+      : [...clientesSelecionados, cliente];
+    aplicarFiltroClientes(proximosClientes);
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -1018,12 +1269,106 @@ function ModalMapaVeiculoInner({
 
         <div className="flex min-h-0 flex-col overflow-y-auto">
           <div className="px-4 pt-3 flex flex-wrap gap-2 text-[11px]">
-            <span className="rounded bg-blue-50 border border-blue-200 px-2 py-1 text-blue-700">
-              {pedidoSelecionado
-                ? `Pedido ${pedidoSelecionado.nPedido}`
-                : tarefaAtual
-                  ? `Tarefa ${tarefaAtual.idTarefa}`
-                  : "Sem tarefa em andamento"}
+            <div className="relative" ref={dropdownPedidosRef}>
+              <button
+                type="button"
+                onClick={() => {
+                  setDropdownPedidosAberto((valor) => !valor);
+                  setDropdownClientesAberto(false);
+                }}
+                className="inline-flex items-center gap-1 rounded border border-blue-200 bg-blue-50 px-2 py-1 text-blue-700"
+              >
+                <span>{resumoPedidosSelecionados}</span>
+                <ChevronDown size={12} className={`transition-transform ${dropdownPedidosAberto ? "rotate-180" : ""}`} />
+              </button>
+              {dropdownPedidosAberto && (
+                <div className="absolute left-0 top-[calc(100%+6px)] z-20 w-[320px] rounded border border-blue-200 bg-white shadow-lg">
+                  <div className="flex items-center justify-between border-b border-gray-100 px-2 py-1.5">
+                    <button
+                      type="button"
+                      onClick={() => aplicarFiltroPedidos(pedidosDoVeiculo.map((pedido) => pedido.nPedido))}
+                      className="text-[10px] font-medium text-blue-600 hover:underline"
+                    >
+                      Selecionar todos
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => aplicarFiltroPedidos([])}
+                      className="text-[10px] font-medium text-red-600 hover:underline"
+                    >
+                      Limpar
+                    </button>
+                  </div>
+                  <div className="max-h-52 overflow-y-auto p-1">
+                    {pedidosDoVeiculo.map((pedido) => (
+                      <label
+                        key={pedido.id}
+                        className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-blue-50"
+                      >
+                        <input
+                          type="checkbox"
+                          className="h-3 w-3 accent-blue-600"
+                          checked={pedidosSelecionadosSet.has(pedido.nPedido)}
+                          onChange={() => alternarPedidoSelecionado(pedido.nPedido)}
+                        />
+                        <span className="font-mono text-[10px] text-blue-700">Pedido {pedido.nPedido}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="relative" ref={dropdownClientesRef}>
+              <button
+                type="button"
+                onClick={() => {
+                  setDropdownClientesAberto((valor) => !valor);
+                  setDropdownPedidosAberto(false);
+                }}
+                className="inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-emerald-700"
+              >
+                <span>{resumoClientesSelecionados}</span>
+                <ChevronDown size={12} className={`transition-transform ${dropdownClientesAberto ? "rotate-180" : ""}`} />
+              </button>
+              {dropdownClientesAberto && (
+                <div className="absolute left-0 top-[calc(100%+6px)] z-20 w-[320px] rounded border border-emerald-200 bg-white shadow-lg">
+                  <div className="flex items-center justify-between border-b border-gray-100 px-2 py-1.5">
+                    <button
+                      type="button"
+                      onClick={() => aplicarFiltroClientes(clientesDoVeiculo)}
+                      className="text-[10px] font-medium text-emerald-700 hover:underline"
+                    >
+                      Selecionar todos
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => aplicarFiltroClientes([])}
+                      className="text-[10px] font-medium text-red-600 hover:underline"
+                    >
+                      Limpar
+                    </button>
+                  </div>
+                  <div className="max-h-52 overflow-y-auto p-1">
+                    {clientesDoVeiculo.map((cliente) => (
+                      <label
+                        key={cliente}
+                        className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-emerald-50"
+                      >
+                        <input
+                          type="checkbox"
+                          className="h-3 w-3 accent-emerald-600"
+                          checked={clientesSelecionadosSet.has(cliente)}
+                          onChange={() => alternarClienteSelecionado(cliente)}
+                        />
+                        <span className="truncate text-[11px] text-gray-700">{cliente}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <span className="rounded bg-slate-50 border border-slate-200 px-2 py-1 text-slate-700">
+              {tarefaAtual ? `Tarefa atual: ${tarefaAtual.idTarefa}` : "Sem tarefa em andamento"}
             </span>
             <span className="rounded bg-emerald-50 border border-emerald-200 px-2 py-1 text-emerald-700">
               Clientes no mapa: {destinos.length}
@@ -1041,6 +1386,31 @@ function ModalMapaVeiculoInner({
                 Origem: {origem.nome}
               </span>
             )}
+            <div className="flex items-center gap-1.5 ml-auto">
+              <span className="rounded bg-slate-50 border border-slate-200 px-2 py-1 text-slate-700">
+                Última Atualização: <strong className="text-gray-800">{lastUpdateModal}</strong>
+              </span>
+              <button
+                type="button"
+                onClick={() => setAutoAtualizarModal(!autoAtualizarModal)}
+                className={`flex items-center gap-1.5 h-7 px-2.5 text-[11px] rounded border transition-colors ${
+                  autoAtualizarModal
+                    ? "bg-green-50 border-green-400 text-green-700"
+                    : "bg-white border-gray-300 text-gray-600"
+                }`}
+              >
+                <span className={`w-2 h-2 rounded-full ${autoAtualizarModal ? "bg-green-500 animate-pulse" : "bg-gray-300"}`} />
+                {autoAtualizarModal ? `AUTO - ${autoCountdownModal}s` : "OFF"}
+              </button>
+              <button
+                type="button"
+                onClick={handleAtualizarModal}
+                className="flex items-center gap-1.5 h-7 px-2.5 text-[11px] rounded border border-blue-400 text-blue-700 hover:bg-blue-50 transition-colors"
+              >
+                <RefreshCw size={12} />
+                Atualizar
+              </button>
+            </div>
           </div>
 
           <StreetMapMock markers={trackingMarkers} />
@@ -1055,7 +1425,7 @@ function ModalMapaVeiculoInner({
                   ["Operação", veiculo.operacao],
                   ["Status", veiculo.statusOperacional],
                   ["Volume", veiculo.volumeEmbarcado],
-                  ["Transportadora", veiculo.transportadora],
+                  ["Tipo de contrato", veiculo.transportadora],
                 ].map(([k, v]) => (
                   <div key={k} className="flex justify-between border-b border-gray-100 pb-0.5">
                     <span className="text-gray-500">{k}:</span>
@@ -1087,9 +1457,7 @@ function ModalMapaVeiculoInner({
               <div className="bg-blue-700/10 px-3 py-1.5 border-b border-blue-200">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-[11px] font-semibold text-blue-800">
-                    {pedidoSelecionado
-                      ? `Pedido ${pedidoSelecionado.nPedido} (${pedidosDaTarefa.length})`
-                      : `Pedidos da tarefa ${tarefaAtual ? tarefaAtual.idTarefa : veiculo.placa} (${pedidosDaTarefa.length})`}
+                    Pedidos selecionados ({pedidosSelecionadosDetalhe.length})
                   </span>
                 </div>
               </div>
@@ -1099,20 +1467,25 @@ function ModalMapaVeiculoInner({
                     <tr>
                       <th className="w-7" />
                       <th className="px-3 py-2 text-left text-[10px] font-semibold text-gray-600 uppercase">#</th>
-                      {["Nº Pedido", "Remessa", "Status", "Vol.", "Peso", "Cubagem", "Valor", "Ressalva"].map((h) => (
+                      {["Cliente / Pedido", "Remessa", "Status", "Vol.", "Peso", "Cubagem", "Valor", "Ressalva"].map((h) => (
                         <th key={h} className="px-3 py-2 text-left text-[10px] font-semibold text-gray-600 uppercase">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody className="bg-white">
-                    {pedidosDaTarefa.map((pedido, index) => (
-                      <LinhaPedidoModalMapa key={pedido.id} pedido={pedido} index={index + 1} />
+                    {gruposClientesPedidos.map((grupo, index) => (
+                      <LinhaClienteModalMapa
+                        key={grupo.cliente}
+                        cliente={grupo.cliente}
+                        pedidos={grupo.pedidos}
+                        index={index + 1}
+                      />
                     ))}
-                    {pedidosDaTarefa.length > 0 ? (
+                    {pedidosSelecionadosDetalhe.length > 0 ? (
                       <TotalRow>
                         <td />
                         <td className="px-3 py-2 text-[11px] text-gray-500">#</td>
-                        <td colSpan={4} className="px-3 py-2 text-[10px] text-gray-500 uppercase">Total</td>
+                        <td colSpan={3} className="px-3 py-2 text-[10px] text-gray-500 uppercase">Total</td>
                         <td className="px-3 py-2 text-[11px] text-center">{`${totaisPedidos.volumes}/${totaisPedidos.volumesTotal}`}</td>
                         <td className="px-3 py-2 text-[11px]">{fmt(totaisPedidos.peso, "peso")}</td>
                         <td className="px-3 py-2 text-[11px]">{fmt(totaisPedidos.cubagem, "cubagem")}</td>
@@ -1122,9 +1495,7 @@ function ModalMapaVeiculoInner({
                     ) : (
                       <tr>
                         <td colSpan={10} className="px-4 py-3 text-center text-xs text-gray-400">
-                          {pedidoSelecionado
-                            ? "Nenhum pedido disponível para este veículo."
-                            : "Nenhum pedido disponível para esta tarefa."}
+                          Nenhum pedido selecionado para exibir no mapa.
                         </td>
                       </tr>
                     )}
