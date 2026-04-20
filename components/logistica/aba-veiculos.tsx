@@ -1068,6 +1068,13 @@ function ModalMapaVeiculoInner({
   }, [veiculo.placa]);
 
   const tarefaAtual = useMemo(() => getTarefaPrioritariaDoVeiculo(veiculo), [veiculo]);
+  const infoRotaAtual = useMemo(() => {
+    if (!tarefaAtual) return "Sem rota em andamento";
+    const dataBase = tarefaAtual.dataRoteirizacao?.split(" ")[0] ?? "";
+    const inicio = tarefaAtual.inicio ? `${dataBase ? `${dataBase} ` : ""}${tarefaAtual.inicio}` : "--";
+    const termino = tarefaAtual.termino ? `${dataBase ? `${dataBase} ` : ""}${tarefaAtual.termino}` : "--";
+    return `Rota: ${tarefaAtual.idTarefa} | Início: ${inicio} | Término: ${termino}`;
+  }, [tarefaAtual]);
   const pedidosDoVeiculo = useMemo(
     () => [...veiculo.pedidos].sort((a, b) => a.nPedido.localeCompare(b.nPedido)),
     [veiculo]
@@ -1387,7 +1394,7 @@ function ModalMapaVeiculoInner({
               )}
             </div>
             <span className="rounded bg-slate-50 border border-slate-200 px-2 py-1 text-slate-700">
-              {tarefaAtual ? `Tarefa atual: ${tarefaAtual.idTarefa}` : "Sem tarefa em andamento"}
+              {infoRotaAtual}
             </span>
             <span className="rounded bg-emerald-50 border border-emerald-200 px-2 py-1 text-emerald-700">
               Clientes no mapa: {destinos.length}
