@@ -1412,6 +1412,29 @@ function ModalMapaVeiculoInner({
                 Origem: {origem.nome}
               </span>
             )}
+            <span className="rounded bg-white border border-slate-200 px-2 py-1 text-[11px] text-slate-700">
+              Última atualização: <strong className="text-gray-800">{lastUpdateModal}</strong>
+            </span>
+            <button
+              type="button"
+              onClick={() => setAutoAtualizarModal(!autoAtualizarModal)}
+              className={`flex items-center gap-1.5 h-7 px-2.5 text-[11px] rounded border transition-colors ${
+                autoAtualizarModal
+                  ? "bg-green-50 border-green-400 text-green-700"
+                  : "bg-white border-gray-300 text-gray-600"
+              }`}
+            >
+              <span className={`w-2 h-2 rounded-full ${autoAtualizarModal ? "bg-green-500 animate-pulse" : "bg-gray-300"}`} />
+              {autoAtualizarModal ? `AUTO - ${autoCountdownModal}s` : "OFF"}
+            </button>
+            <button
+              type="button"
+              onClick={handleAtualizarModal}
+              className="flex items-center gap-1.5 h-7 px-2.5 text-[11px] rounded border border-blue-400 text-blue-700 hover:bg-blue-50 transition-colors"
+            >
+              <RefreshCw size={12} />
+              Atualizar
+            </button>
           </div>
 
           <StreetMapMock markers={trackingMarkers} />
@@ -1460,31 +1483,6 @@ function ModalMapaVeiculoInner({
                   <span className="text-[11px] font-semibold text-blue-800">
                     Pedidos selecionados ({pedidosSelecionadosDetalhe.length})
                   </span>
-                  <div className="flex items-center gap-1.5 flex-wrap justify-end">
-                    <span className="rounded bg-white border border-slate-200 px-2 py-1 text-[11px] text-slate-700">
-                      Última atualização: <strong className="text-gray-800">{lastUpdateModal}</strong>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setAutoAtualizarModal(!autoAtualizarModal)}
-                      className={`flex items-center gap-1.5 h-7 px-2.5 text-[11px] rounded border transition-colors ${
-                        autoAtualizarModal
-                          ? "bg-green-50 border-green-400 text-green-700"
-                          : "bg-white border-gray-300 text-gray-600"
-                      }`}
-                    >
-                      <span className={`w-2 h-2 rounded-full ${autoAtualizarModal ? "bg-green-500 animate-pulse" : "bg-gray-300"}`} />
-                      {autoAtualizarModal ? `AUTO - ${autoCountdownModal}s` : "OFF"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleAtualizarModal}
-                      className="flex items-center gap-1.5 h-7 px-2.5 text-[11px] rounded border border-blue-400 text-blue-700 hover:bg-blue-50 transition-colors"
-                    >
-                      <RefreshCw size={12} />
-                      Atualizar
-                    </button>
-                  </div>
                 </div>
               </div>
               <div className="overflow-y-auto">
