@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { ChevronRight, ChevronDown, Download, X, CameraOff, Truck, Package, Warehouse, AlertTriangle, RefreshCw } from "lucide-react";
+import { ChevronRight, ChevronDown, Download, CameraOff, Truck, Package, Warehouse, AlertTriangle, RefreshCw } from "lucide-react";
 import { ModalComprovante } from "@/components/logistica/modal-comprovante";
 import type { Veiculo, Pedido, StatusPedido, Tarefa } from "@/lib/mock-data";
 import { TAREFAS, isPedidoParcialmenteEmbarcado } from "@/lib/mock-data";
@@ -1041,7 +1041,6 @@ function StreetMapMock({ markers }: { markers: TrackingMarkerMock[] }) {
 
 function ModalMapaVeiculoInner({
   veiculo,
-  onClose,
   pedidoFoco,
 }: {
   veiculo: Veiculo;
@@ -1283,14 +1282,13 @@ function ModalMapaVeiculoInner({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-lg shadow-2xl w-[1040px] max-w-[96vw] max-h-[92vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-5 py-3 bg-[#1a3c6e] text-white">
+    <div className="fixed inset-0 z-50 bg-white">
+      <div className="h-full w-full overflow-hidden flex flex-col">
+        <div className="flex items-center px-5 py-3 bg-[#1a3c6e] text-white">
           <div>
             <h2 className="text-sm font-semibold">Localização do Veículo</h2>
             <p className="text-blue-200 text-xs">{veiculo.placa} - {veiculo.motorista}</p>
           </div>
-          <button onClick={onClose} className="text-blue-200 hover:text-white"><X size={18} /></button>
         </div>
 
         <div className="flex min-h-0 flex-col overflow-y-auto">
@@ -1483,6 +1481,31 @@ function ModalMapaVeiculoInner({
                   <span className="text-[11px] font-semibold text-blue-800">
                     Pedidos selecionados ({pedidosSelecionadosDetalhe.length})
                   </span>
+                  <div className="flex items-center gap-2 flex-wrap justify-end">
+                    <span className="rounded bg-white border border-slate-200 px-2 py-1 text-[11px] text-slate-700">
+                      Última atualização: <strong className="text-gray-800">{lastUpdateModal}</strong>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setAutoAtualizarModal(!autoAtualizarModal)}
+                      className={`flex items-center gap-1.5 h-7 px-2.5 text-[11px] rounded border transition-colors ${
+                        autoAtualizarModal
+                          ? "bg-green-50 border-green-400 text-green-700"
+                          : "bg-white border-gray-300 text-gray-600"
+                      }`}
+                    >
+                      <span className={`w-2 h-2 rounded-full ${autoAtualizarModal ? "bg-green-500 animate-pulse" : "bg-gray-300"}`} />
+                      {autoAtualizarModal ? `AUTO - ${autoCountdownModal}s` : "OFF"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleAtualizarModal}
+                      className="flex items-center gap-1.5 h-7 px-2.5 text-[11px] rounded border border-blue-400 text-blue-700 hover:bg-blue-50 transition-colors"
+                    >
+                      <RefreshCw size={12} />
+                      Atualizar
+                    </button>
+                  </div>
                 </div>
               </div>
               <div className="overflow-y-auto">
