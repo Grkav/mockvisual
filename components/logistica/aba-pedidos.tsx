@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { ChevronRight, ChevronDown, Download, CameraOff, Power, ClipboardCheck, AlertTriangle } from "lucide-react";
 import type { Pedido, StatusPedido, Comprovante, Veiculo } from "@/lib/mock-data";
 import { VEICULOS, isPedidoParcialmenteEmbarcado } from "@/lib/mock-data";
@@ -11,6 +11,9 @@ import {
 } from "@/components/logistica/layout-components";
 import { ModalComprovante } from "@/components/logistica/modal-comprovante";
 import { ModalMapaVeiculo } from "@/components/logistica/aba-veiculos";
+import { EquipeContatoTooltip } from "@/components/logistica/equipe-contato-tooltip";
+import { ModalSelecaoRessalvas, montarGruposComprovantesRessalva } from "@/components/logistica/modal-selecao-ressalvas";
+import { ModalSelecaoComprovantes, montarGruposComprovantes } from "@/components/logistica/modal-selecao-comprovantes";
 
 // â”€â”€â”€ Abas internas do pedido (reutilizÃ¡vel) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function AbasPedido({ pedido, filtroStatus }: { pedido: Pedido; filtroStatus?: StatusPedido[] }) {
@@ -238,6 +241,12 @@ function LinhaPedido({
 }) {
   const [expandido, setExpandido] = useState(false);
   const [modalCompIcone, setModalCompIcone] = useState<{ comprovantes: Comprovante[]; indice: number } | null>(null);
+  const [seletorCompAberto, setSeletorCompAberto] = useState(false);
+  const [seletorRessalvaAberto, setSeletorRessalvaAberto] = useState(false);
+  const gruposComprovante = useMemo(() => montarGruposComprovantes([pedido]), [pedido]);
+  const possuiComprovante = gruposComprovante.length > 0;
+  const gruposRessalva = useMemo(() => montarGruposComprovantesRessalva([pedido]), [pedido]);
+  const possuiComprovanteRessalva = gruposRessalva.length > 0;
   const ressalvaSemFoto = Boolean(
     pedido.tipoRessalva &&
     (pedido.ressalvas.length === 0 || pedido.ressalvas.some((r) => !r.temFoto))
@@ -251,6 +260,28 @@ function LinhaPedido({
           indiceInicial={modalCompIcone.indice}
           pedidoNum={pedido.nPedido}
           onClose={() => setModalCompIcone(null)}
+        />
+      )}
+      {seletorCompAberto && (
+        <ModalSelecaoComprovantes
+          titulo={`Comprovantes - Pedido ${pedido.nPedido}`}
+          grupos={gruposComprovante}
+          onClose={() => setSeletorCompAberto(false)}
+          onSelecionar={(_pedidoNum, comprovantes, indice) => {
+            setSeletorCompAberto(false);
+            setModalCompIcone({ comprovantes, indice });
+          }}
+        />
+      )}
+      {seletorRessalvaAberto && (
+        <ModalSelecaoRessalvas
+          titulo={`Comprovantes da ressalva - Pedido ${pedido.nPedido}`}
+          grupos={gruposRessalva}
+          onClose={() => setSeletorRessalvaAberto(false)}
+          onSelecionar={(_pedidoNum, comprovantes, indice) => {
+            setSeletorRessalvaAberto(false);
+            setModalCompIcone({ comprovantes, indice });
+          }}
         />
       )}
       <tr
@@ -286,18 +317,15 @@ function LinhaPedido({
             {pedido.placa}
           </button>
         </td>
-        <td className="px-2 py-2 text-[11px]">{pedido.motorista}</td>
-        <td className="px-2 py-2 text-[11px]">{pedido.ajudante}</td>
+        <td className="px-2 py-2 text-[11px]"><EquipeContatoTooltip nome={pedido.motorista} /></td>
+        <td className="px-2 py-2 text-[11px]"><EquipeContatoTooltip nome={pedido.ajudante} /></td>
         <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
-          {pedido.comComprovante ? (
+          {possuiComprovante ? (
             <button
               type="button"
               className="inline-flex"
-              title="Abrir comprovante"
-              onClick={() => {
-                if (pedido.comprovantes.length === 0) return;
-                setModalCompIcone({ comprovantes: pedido.comprovantes, indice: 0 });
-              }}
+              title="Selecionar comprovante"
+              onClick={() => setSeletorCompAberto(true)}
             >
               <IconeComprovante tem={true} />
             </button>
@@ -309,17 +337,34 @@ function LinhaPedido({
             </span>
           )}
         </td>
-        <td className="px-2 py-2">
+        <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
           {pedido.tipoRessalva ? (
-            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${pedido.tipoRessalva === "No Pedido" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"}`}>
-              {pedido.tipoRessalva}
-              {ressalvaSemFoto && (
-                <>
-                  <span>-</span>
-                  <CameraOff size={12} />
-                </>
-              )}
-            </span>
+            possuiComprovanteRessalva ? (
+              <button
+                type="button"
+                onClick={() => setSeletorRessalvaAberto(true)}
+                className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium transition hover:brightness-95 ${pedido.tipoRessalva === "No Pedido" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"}`}
+                title="Selecionar comprovante da ressalva"
+              >
+                {pedido.tipoRessalva}
+                {ressalvaSemFoto && (
+                  <>
+                    <span>-</span>
+                    <CameraOff size={12} />
+                  </>
+                )}
+              </button>
+            ) : (
+              <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${pedido.tipoRessalva === "No Pedido" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"}`}>
+                {pedido.tipoRessalva}
+                {ressalvaSemFoto && (
+                  <>
+                    <span>-</span>
+                    <CameraOff size={12} />
+                  </>
+                )}
+              </span>
+            )
           ) : <span className="text-gray-300 text-[10px]">-</span>}
         </td>
         <td className="px-2 py-2 text-center"><ValidacaoBadge valor={pedido.validacao.entregaRoterizada} /></td>

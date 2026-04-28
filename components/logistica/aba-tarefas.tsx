@@ -13,6 +13,7 @@ import {
 } from "@/components/logistica/layout-components";
 import { ModalComprovante } from "@/components/logistica/modal-comprovante";
 import { ModalMapaVeiculo } from "@/components/logistica/aba-veiculos";
+import { EquipeContatoTooltip } from "@/components/logistica/equipe-contato-tooltip";
 
 // â”€â”€â”€ Modal Pedidos de uma parada â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function ModalPedidosParada({
@@ -1379,8 +1380,8 @@ function LinhaTarefa({
             {tarefa.veiculo}
           </button>
         </td>
-        <td className="px-2 py-2 text-[11px]">{tarefa.motorista}</td>
-        <td className="px-2 py-2 text-[11px]">{tarefa.ajudante}</td>
+        <td className="px-2 py-2 text-[11px]"><EquipeContatoTooltip nome={tarefa.motorista} /></td>
+        <td className="px-2 py-2 text-[11px]"><EquipeContatoTooltip nome={tarefa.ajudante} /></td>
         <td className="px-2 py-2 text-[11px] text-center">{tarefa.dataRoteirizacao || "--"}</td>
         <td className="px-2 py-2"><StatusBadge status={tarefa.status} /></td>
         <td className="px-2 py-2 text-[11px] text-center">{tarefa.inicioPrevisto}</td>

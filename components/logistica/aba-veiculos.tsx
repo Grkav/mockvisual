@@ -11,6 +11,9 @@ import {
   StatusBadge, fmt, useSortable, useColFilters, calcularResultado,
   ValidacaoBadge, ResultadoBadge, NaoProgramadoBadge, ThValidacao,
 } from "@/components/logistica/layout-components";
+import { EquipeContatoTooltip } from "@/components/logistica/equipe-contato-tooltip";
+import { ModalSelecaoRessalvas, montarGruposComprovantesRessalva } from "@/components/logistica/modal-selecao-ressalvas";
+import { ModalSelecaoComprovantes, montarGruposComprovantes } from "@/components/logistica/modal-selecao-comprovantes";
 
 // â”€â”€â”€ Abas internas do pedido â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function AbasPedido({ pedido, filtroStatus }: { pedido: Pedido; filtroStatus?: StatusPedido[] }) {
@@ -233,12 +236,58 @@ function LinhaPedidoVeiculo({
   compact?: boolean;
 }) {
   const [expandido, setExpandido] = useState(false);
+  const [modalCompIcone, setModalCompIcone] = useState<{ comprovantes: Pedido["comprovantes"]; indice: number; pedidoNum: string } | null>(null);
+  const [seletorComprovanteAberto, setSeletorComprovanteAberto] = useState(false);
+  const [modalCompRessalva, setModalCompRessalva] = useState<{ comprovantes: Pedido["comprovantes"]; indice: number; pedidoNum: string } | null>(null);
+  const [seletorRessalvaAberto, setSeletorRessalvaAberto] = useState(false);
+  const gruposComprovante = useMemo(() => montarGruposComprovantes([pedido]), [pedido]);
+  const possuiComprovante = gruposComprovante.length > 0;
+  const gruposRessalva = useMemo(() => montarGruposComprovantesRessalva([pedido]), [pedido]);
+  const possuiComprovanteRessalva = gruposRessalva.length > 0;
   const ressalvaSemFoto = Boolean(
     pedido.tipoRessalva &&
     (pedido.ressalvas.length === 0 || pedido.ressalvas.some((r) => !r.temFoto))
   );
   return (
     <>
+      {modalCompIcone && (
+        <ModalComprovante
+          comprovantes={modalCompIcone.comprovantes}
+          indiceInicial={modalCompIcone.indice}
+          pedidoNum={modalCompIcone.pedidoNum}
+          onClose={() => setModalCompIcone(null)}
+        />
+      )}
+      {seletorComprovanteAberto && (
+        <ModalSelecaoComprovantes
+          titulo={`Comprovantes - Pedido ${pedido.nPedido}`}
+          grupos={gruposComprovante}
+          onClose={() => setSeletorComprovanteAberto(false)}
+          onSelecionar={(pedidoNum, comprovantes, indice) => {
+            setSeletorComprovanteAberto(false);
+            setModalCompIcone({ comprovantes, indice, pedidoNum });
+          }}
+        />
+      )}
+      {modalCompRessalva && (
+        <ModalComprovante
+          comprovantes={modalCompRessalva.comprovantes}
+          indiceInicial={modalCompRessalva.indice}
+          pedidoNum={modalCompRessalva.pedidoNum}
+          onClose={() => setModalCompRessalva(null)}
+        />
+      )}
+      {seletorRessalvaAberto && (
+        <ModalSelecaoRessalvas
+          titulo={`Comprovantes da ressalva - Pedido ${pedido.nPedido}`}
+          grupos={gruposRessalva}
+          onClose={() => setSeletorRessalvaAberto(false)}
+          onSelecionar={(pedidoNum, comprovantes, indice) => {
+            setSeletorRessalvaAberto(false);
+            setModalCompRessalva({ comprovantes, indice, pedidoNum });
+          }}
+        />
+      )}
       <tr
         onClick={() => setExpandido(!expandido)}
         className={`border-t border-gray-100 cursor-pointer transition-colors ${expandido ? "bg-blue-50" : "hover:bg-gray-50"}`}
@@ -267,8 +316,10 @@ function LinhaPedidoVeiculo({
           <span className="inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">{pedido.prioridade}</span>
         </td>
         <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
-          {pedido.comComprovante ? (
-            <IconeComprovante tem={true} />
+          {possuiComprovante ? (
+            <button type="button" className="inline-flex" title="Selecionar comprovante" onClick={() => setSeletorComprovanteAberto(true)}>
+              <IconeComprovante tem={true} />
+            </button>
           ) : (
             <span className="inline-flex items-center gap-1 text-amber-700">
               <IconeComprovante tem={false} />
@@ -277,17 +328,34 @@ function LinhaPedidoVeiculo({
             </span>
           )}
         </td>
-        <td className="px-2 py-1.5">
+        <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
           {pedido.tipoRessalva ? (
-            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${pedido.tipoRessalva === "No Pedido" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"}`}>
-              {pedido.tipoRessalva}
-              {ressalvaSemFoto && (
-                <>
-                  <span>-</span>
-                  <CameraOff size={12} />
-                </>
-              )}
-            </span>
+            possuiComprovanteRessalva ? (
+              <button
+                type="button"
+                onClick={() => setSeletorRessalvaAberto(true)}
+                className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium transition hover:brightness-95 ${pedido.tipoRessalva === "No Pedido" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"}`}
+                title="Selecionar comprovante da ressalva"
+              >
+                {pedido.tipoRessalva}
+                {ressalvaSemFoto && (
+                  <>
+                    <span>-</span>
+                    <CameraOff size={12} />
+                  </>
+                )}
+              </button>
+            ) : (
+              <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${pedido.tipoRessalva === "No Pedido" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"}`}>
+                {pedido.tipoRessalva}
+                {ressalvaSemFoto && (
+                  <>
+                    <span>-</span>
+                    <CameraOff size={12} />
+                  </>
+                )}
+              </span>
+            )
           ) : <span className="text-gray-300 text-[10px]">-</span>}
         </td>
         {!compact && (
@@ -469,6 +537,9 @@ interface TrackingMarkerMock {
   nome: string;
   descricao: string;
   pedidosCliente?: string[];
+  rotaAtual?: string;
+  tarefaAtual?: string;
+  sequenciaAtual?: string;
 }
 
 interface LocalizacaoFicticia {
@@ -606,6 +677,15 @@ function montarTrackingMarkersMock(veiculo: Veiculo, pedidosBase?: Pedido[]): Tr
   const cor = COR_OPERACAO_MOCK[veiculo.operacao] ?? "#1E3C7D";
   const tarefa = getTarefaPrioritariaDoVeiculo(veiculo);
   const enderecoAtualVeiculo = getEnderecoAtualVeiculoMock(veiculo, tarefa);
+  const deslocamentoEmCurso = tarefa?.deslocamentos.find((d) => !d.horarioFinal);
+  const ultimaOrdemRota =
+    tarefa && tarefa.deslocamentos.length > 0 ? tarefa.deslocamentos[tarefa.deslocamentos.length - 1]?.ordem ?? null : null;
+  const ordemRotaAtual = deslocamentoEmCurso?.ordem ?? ultimaOrdemRota;
+  const totalSequenciasRota = tarefa?.deslocamentos.length ?? 0;
+  const rotaAtualLabel = ordemRotaAtual ? `Rota ${ordemRotaAtual}` : "Sem rota em andamento";
+  const tarefaAtualLabel = tarefa?.idTarefa ?? "--";
+  const sequenciaAtualLabel =
+    ordemRotaAtual && totalSequenciasRota > 0 ? `${ordemRotaAtual} de ${totalSequenciasRota}` : "--";
   const origemNome =
     tarefa?.timeline.find((item) => item.tipo === "galpao")?.nome ??
     GALPAO_POR_OPERACAO[veiculo.operacao] ??
@@ -646,6 +726,9 @@ function montarTrackingMarkersMock(veiculo: Veiculo, pedidosBase?: Pedido[]): Tr
       addressId: null,
       nome: `Veículo ${veiculo.placa}`,
       descricao: `Status: ${veiculo.statusOperacional}`,
+      rotaAtual: rotaAtualLabel,
+      tarefaAtual: tarefaAtualLabel,
+      sequenciaAtual: sequenciaAtualLabel,
     },
   ];
 
@@ -1018,6 +1101,15 @@ function StreetMapMock({
           {marker.tipo === "origem" && (
             <div className="pointer-events-none absolute left-1/2 top-[calc(100%+6px)] z-20 hidden w-max max-w-[260px] -translate-x-1/2 rounded border border-slate-200 bg-white px-2 py-1.5 text-[10px] text-slate-700 shadow-lg group-hover:block">
               <div className="font-semibold text-slate-900">Galpão: {marker.nome}</div>
+            </div>
+          )}
+          {marker.tipo === "veiculo" && (
+            <div className="pointer-events-none absolute left-1/2 top-[calc(100%+6px)] z-20 hidden w-max max-w-[280px] -translate-x-1/2 rounded border border-slate-200 bg-white px-2 py-1.5 text-[10px] text-slate-700 shadow-lg group-hover:block">
+              <div className="font-semibold text-slate-900">{marker.nome}</div>
+              <div className="mt-0.5 text-slate-600">{marker.descricao}</div>
+              <div className="mt-0.5 text-slate-600">Tarefa atual: {marker.tarefaAtual ?? "--"}</div>
+              <div className="text-slate-600">Rota atual: {marker.rotaAtual ?? "--"}</div>
+              <div className="text-slate-600">Sequência: {marker.sequenciaAtual ?? "--"}</div>
             </div>
           )}
           {marker.tipo === "destino" && (
@@ -1700,16 +1792,23 @@ function LinhaVeiculo({
   onAbrirMapa: (v: Veiculo) => void;
 }) {
   const [expandido, setExpandido] = useState(false);
+  const [modalCompIcone, setModalCompIcone] = useState<{ comprovantes: Pedido["comprovantes"]; indice: number; pedidoNum: string } | null>(null);
+  const [seletorComprovanteAberto, setSeletorComprovanteAberto] = useState(false);
+  const [modalCompRessalva, setModalCompRessalva] = useState<{ comprovantes: Pedido["comprovantes"]; indice: number; pedidoNum: string } | null>(null);
+  const [seletorRessalvaAberto, setSeletorRessalvaAberto] = useState(false);
   const formatarOrdemCliente = (cliente: string | undefined, ordem: number) => (cliente ? `${ordem}°-${cliente}` : "--");
   const tipoRessalvaVeiculo: "No Pedido" | "No Item" | null = veiculo.pedidos.some((p) => p.tipoRessalva === "No Pedido")
     ? "No Pedido"
     : veiculo.pedidos.some((p) => p.tipoRessalva === "No Item")
       ? "No Item"
       : null;
+  const gruposComprovanteVeiculo = useMemo(() => montarGruposComprovantes(veiculo.pedidos), [veiculo.pedidos]);
+  const possuiComprovanteVeiculo = gruposComprovanteVeiculo.length > 0;
+  const gruposRessalvaVeiculo = useMemo(() => montarGruposComprovantesRessalva(veiculo.pedidos), [veiculo.pedidos]);
+  const possuiComprovanteRessalvaVeiculo = gruposRessalvaVeiculo.length > 0;
   const ressalvaSemFotoVeiculo = veiculo.pedidos.some(
     (p) => p.tipoRessalva !== null && (p.ressalvas.length === 0 || p.ressalvas.some((r) => !r.temFoto))
   );
-  const semComprovanteVeiculo = veiculo.pedidos.some((p) => !p.comComprovante);
 
   const pedidosFiltrados = filtroStatus.length > 0
     ? veiculo.pedidos.filter((p) =>
@@ -1731,6 +1830,44 @@ function LinhaVeiculo({
 
   return (
     <>
+      {modalCompIcone && (
+        <ModalComprovante
+          comprovantes={modalCompIcone.comprovantes}
+          indiceInicial={modalCompIcone.indice}
+          pedidoNum={modalCompIcone.pedidoNum}
+          onClose={() => setModalCompIcone(null)}
+        />
+      )}
+      {seletorComprovanteAberto && (
+        <ModalSelecaoComprovantes
+          titulo={`Comprovantes - Veículo ${veiculo.placa}`}
+          grupos={gruposComprovanteVeiculo}
+          onClose={() => setSeletorComprovanteAberto(false)}
+          onSelecionar={(pedidoNum, comprovantes, indice) => {
+            setSeletorComprovanteAberto(false);
+            setModalCompIcone({ comprovantes, indice, pedidoNum });
+          }}
+        />
+      )}
+      {modalCompRessalva && (
+        <ModalComprovante
+          comprovantes={modalCompRessalva.comprovantes}
+          indiceInicial={modalCompRessalva.indice}
+          pedidoNum={modalCompRessalva.pedidoNum}
+          onClose={() => setModalCompRessalva(null)}
+        />
+      )}
+      {seletorRessalvaAberto && (
+        <ModalSelecaoRessalvas
+          titulo={`Comprovantes de ressalva - Veículo ${veiculo.placa}`}
+          grupos={gruposRessalvaVeiculo}
+          onClose={() => setSeletorRessalvaAberto(false)}
+          onSelecionar={(pedidoNum, comprovantes, indice) => {
+            setSeletorRessalvaAberto(false);
+            setModalCompRessalva({ comprovantes, indice, pedidoNum });
+          }}
+        />
+      )}
       <tr
         onClick={() => setExpandido(!expandido)}
         className={`border-t border-gray-100 cursor-pointer transition-colors ${expandido ? "bg-blue-50/60" : "hover:bg-gray-50"}`}
@@ -1752,8 +1889,8 @@ function LinhaVeiculo({
         <td className="px-2 py-2 text-[11px]">{veiculo.operacao}</td>
         <td className="px-2 py-2 text-[11px]">{veiculo.classe}</td>
         <td className="px-2 py-2 text-[11px]">{veiculo.tipoClimatizacao}</td>
-        <td className="px-2 py-2 text-[11px]">{veiculo.motorista}</td>
-        <td className="px-2 py-2 text-[11px]">{veiculo.ajudante}</td>
+        <td className="px-2 py-2 text-[11px]"><EquipeContatoTooltip nome={veiculo.motorista} /></td>
+        <td className="px-2 py-2 text-[11px]"><EquipeContatoTooltip nome={veiculo.ajudante} /></td>
         <td className="px-2 py-2 text-[11px]">{veiculo.transportadora}</td>
         <td className="px-2 py-2"><StatusBadge status={veiculo.status} /></td>
         <td className="px-2 py-2 text-[11px]">{atualCliente}</td>
@@ -1762,30 +1899,49 @@ function LinhaVeiculo({
         <td className="px-2 py-2 text-[11px] text-center font-medium">{veiculo.volumeEmbarcado}</td>
         <td className="px-2 py-2 text-[11px] text-center">{veiculo.qtdPedidos}</td>
         <td className="px-2 py-2 text-[11px]">{getTarefaRotaLabel(veiculo)}</td>
-        <td className="px-2 py-2 text-[11px]">
+        <td className="px-2 py-2 text-[11px]" onClick={(e) => e.stopPropagation()}>
           {tipoRessalvaVeiculo ? (
-            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] ${tipoRessalvaVeiculo === "No Pedido" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"}`}>
-              {tipoRessalvaVeiculo}
-              {ressalvaSemFotoVeiculo && (
-                <>
-                  <span>-</span>
-                  <CameraOff size={12} />
-                </>
-              )}
-            </span>
+            possuiComprovanteRessalvaVeiculo ? (
+              <button
+                type="button"
+                onClick={() => setSeletorRessalvaAberto(true)}
+                className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] transition hover:brightness-95 ${tipoRessalvaVeiculo === "No Pedido" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"}`}
+                title="Selecionar comprovante de ressalva"
+              >
+                {tipoRessalvaVeiculo}
+                {ressalvaSemFotoVeiculo && (
+                  <>
+                    <span>-</span>
+                    <CameraOff size={12} />
+                  </>
+                )}
+              </button>
+            ) : (
+              <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] ${tipoRessalvaVeiculo === "No Pedido" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"}`}>
+                {tipoRessalvaVeiculo}
+                {ressalvaSemFotoVeiculo && (
+                  <>
+                    <span>-</span>
+                    <CameraOff size={12} />
+                  </>
+                )}
+              </span>
+            )
           ) : (
             <span className="text-gray-300 text-[10px]">-</span>
           )}
         </td>
-        <td className="px-2 py-2">
-          {semComprovanteVeiculo ? (
+        <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
+          {possuiComprovanteVeiculo ? (
+            <button type="button" className="inline-flex" title="Selecionar comprovante" onClick={() => setSeletorComprovanteAberto(true)}>
+              <IconeComprovante tem={true} />
+            </button>
+          ) : (
             <span className="inline-flex items-center gap-1 text-amber-700">
               <IconeComprovante tem={false} />
               <span className="text-[10px]">-</span>
               <CameraOff size={12} />
             </span>
-          ) : (
-            <IconeComprovante tem={true} />
           )}
         </td>
         <td className="px-2 py-2 text-[11px]  font-medium">{fmt(veiculo.valorTotal, "moeda")}</td>
