@@ -323,7 +323,7 @@ function LinhaPedido({
           {possuiComprovante ? (
             <button
               type="button"
-              className="inline-flex"
+              className="inline-flex cursor-pointer"
               title="Selecionar comprovante"
               onClick={() => setSeletorCompAberto(true)}
             >
@@ -343,7 +343,7 @@ function LinhaPedido({
               <button
                 type="button"
                 onClick={() => setSeletorRessalvaAberto(true)}
-                className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium transition hover:brightness-95 ${pedido.tipoRessalva === "No Pedido" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"}`}
+                className={`inline-flex cursor-pointer items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium transition hover:brightness-95 ${pedido.tipoRessalva === "No Pedido" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"}`}
                 title="Selecionar comprovante da ressalva"
               >
                 {pedido.tipoRessalva}

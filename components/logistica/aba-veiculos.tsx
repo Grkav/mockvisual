@@ -317,7 +317,7 @@ function LinhaPedidoVeiculo({
         </td>
         <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
           {possuiComprovante ? (
-            <button type="button" className="inline-flex" title="Selecionar comprovante" onClick={() => setSeletorComprovanteAberto(true)}>
+            <button type="button" className="inline-flex cursor-pointer" title="Selecionar comprovante" onClick={() => setSeletorComprovanteAberto(true)}>
               <IconeComprovante tem={true} />
             </button>
           ) : (
@@ -334,7 +334,7 @@ function LinhaPedidoVeiculo({
               <button
                 type="button"
                 onClick={() => setSeletorRessalvaAberto(true)}
-                className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium transition hover:brightness-95 ${pedido.tipoRessalva === "No Pedido" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"}`}
+                className={`inline-flex cursor-pointer items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium transition hover:brightness-95 ${pedido.tipoRessalva === "No Pedido" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"}`}
                 title="Selecionar comprovante da ressalva"
               >
                 {pedido.tipoRessalva}
@@ -1938,7 +1938,7 @@ function LinhaVeiculo({
               <button
                 type="button"
                 onClick={() => setSeletorRessalvaAberto(true)}
-                className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] transition hover:brightness-95 ${tipoRessalvaVeiculo === "No Pedido" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"}`}
+                className={`inline-flex cursor-pointer items-center gap-1 rounded px-1.5 py-0.5 text-[10px] transition hover:brightness-95 ${tipoRessalvaVeiculo === "No Pedido" ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"}`}
                 title="Selecionar comprovante de ressalva"
               >
                 {tipoRessalvaVeiculo}
@@ -1966,7 +1966,7 @@ function LinhaVeiculo({
         </td>
         <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
           {possuiComprovanteVeiculo ? (
-            <button type="button" className="inline-flex" title="Selecionar comprovante" onClick={() => setSeletorComprovanteAberto(true)}>
+            <button type="button" className="inline-flex cursor-pointer" title="Selecionar comprovante" onClick={() => setSeletorComprovanteAberto(true)}>
               <IconeComprovante tem={true} />
             </button>
           ) : (
