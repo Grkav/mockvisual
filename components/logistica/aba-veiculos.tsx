@@ -453,10 +453,12 @@ function LinhaClienteModalMapa({
   cliente,
   pedidos,
   index,
+  sequenciaEntrega,
 }: {
   cliente: string;
   pedidos: Pedido[];
   index: number;
+  sequenciaEntrega: number | null;
 }) {
   const [expandido, setExpandido] = useState(false);
   const totaisCliente = useMemo(
@@ -488,7 +490,18 @@ function LinhaClienteModalMapa({
           </button>
         </td>
         <td className="px-3 py-2 text-gray-500 font-medium">{index}</td>
-        <td className="px-3 py-2 font-semibold text-blue-700">{cliente}</td>
+        <td className="px-3 py-2 font-semibold text-blue-700">
+          <span className="inline-flex items-center gap-2">
+            {sequenciaEntrega ? (
+              <span className="inline-flex items-center rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-medium text-indigo-700">
+                {sequenciaEntrega}ª
+              </span>
+            ) : (
+              <span className="text-[10px] text-gray-300">--</span>
+            )}
+            <span>{cliente}</span>
+          </span>
+        </td>
         <td className="px-3 py-2 text-gray-600">{pedidos.length} pedido(s)</td>
         <td className="px-3 py-2">
           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700">
@@ -1364,6 +1377,16 @@ function ModalMapaVeiculoInner({
     [pedidosDoVeiculo, pedidosSelecionadosSet, clientesSelecionadosSet, filtroClientesAtivo]
   );
   const gruposClientesPedidos = useMemo(() => {
+    const sequenciaClientesRota = new Map<string, number>();
+    const clientesTimeline = (tarefaAtual?.timeline ?? [])
+      .filter((item) => item.tipo !== "galpao")
+      .map((item) => item.nome);
+    clientesTimeline.forEach((cliente, idx) => {
+      if (!sequenciaClientesRota.has(cliente)) {
+        sequenciaClientesRota.set(cliente, idx + 1);
+      }
+    });
+
     const mapa = new Map<string, Pedido[]>();
     for (const pedido of pedidosSelecionadosDetalhe) {
       const listaCliente = mapa.get(pedido.cliente) ?? [];
@@ -1373,10 +1396,19 @@ function ModalMapaVeiculoInner({
     return [...mapa.entries()]
       .map(([cliente, pedidos]) => ({
         cliente,
+        sequenciaEntrega: sequenciaClientesRota.get(cliente) ?? null,
         pedidos: [...pedidos].sort((a, b) => a.nPedido.localeCompare(b.nPedido)),
       }))
-      .sort((a, b) => a.cliente.localeCompare(b.cliente));
-  }, [pedidosSelecionadosDetalhe]);
+      .sort((a, b) => {
+        if (a.sequenciaEntrega === null && b.sequenciaEntrega === null) {
+          return a.cliente.localeCompare(b.cliente);
+        }
+        if (a.sequenciaEntrega === null) return 1;
+        if (b.sequenciaEntrega === null) return -1;
+        if (a.sequenciaEntrega !== b.sequenciaEntrega) return a.sequenciaEntrega - b.sequenciaEntrega;
+        return a.cliente.localeCompare(b.cliente);
+      });
+  }, [pedidosSelecionadosDetalhe, tarefaAtual]);
   const trackingMarkersBase = useMemo(
     () => montarTrackingMarkersMock(veiculo, pedidosDoVeiculo),
     [veiculo, pedidosDoVeiculo]
@@ -1741,6 +1773,7 @@ function ModalMapaVeiculoInner({
                         cliente={grupo.cliente}
                         pedidos={grupo.pedidos}
                         index={index + 1}
+                        sequenciaEntrega={grupo.sequenciaEntrega}
                       />
                     ))}
                     {pedidosSelecionadosDetalhe.length > 0 ? (
