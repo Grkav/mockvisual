@@ -33,9 +33,19 @@ function normalizarNome(nome: string) {
     .trim();
 }
 
-function obterTelefoneEquipe(nome: string) {
+export function obterTelefoneEquipe(nome: string) {
   if (!nome) return null;
   return CONTATOS_EQUIPE[nome] ?? CONTATOS_NORMALIZADOS.get(normalizarNome(nome)) ?? null;
+}
+
+function obterIniciais(nome: string) {
+  const partes = nome
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (partes.length === 0) return "--";
+  if (partes.length === 1) return partes[0].slice(0, 2).toUpperCase();
+  return `${partes[0][0] ?? ""}${partes[partes.length - 1][0] ?? ""}`.toUpperCase();
 }
 
 export function EquipeContatoTooltip({ nome }: { nome: string }) {
@@ -68,20 +78,25 @@ export function EquipeContatoTooltip({ nome }: { nome: string }) {
         </button>
       </TooltipTrigger>
       <TooltipContent side="top" className="px-2 py-2">
-        <div className="flex min-w-[190px] items-center justify-between gap-2">
-          <div className="flex flex-col">
-            <span className="text-[10px] opacity-80">{nome || "Sem nome"}</span>
-            <span className="font-mono text-[11px]">{telefone ?? "--"}</span>
+        <div className="min-w-[210px] space-y-2">
+          <div className="rounded-md border border-white/25 bg-white/10 p-2">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-md border border-white/35 bg-slate-700 text-lg font-semibold text-white">
+              {obterIniciais(nome || "")}
+            </div>
+            <div className="mt-1.5 text-center text-[10px] opacity-90">{nome || "Sem nome"}</div>
           </div>
-          <button
-            type="button"
-            onClick={copiarTelefone}
-            disabled={!telefone}
-            className="inline-flex items-center gap-1 rounded border border-white/35 px-1.5 py-1 text-[10px] transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {copiado ? <Check size={12} /> : <Copy size={12} />}
-            {copiado ? "Copiado" : "Copiar"}
-          </button>
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-mono text-[11px]">{telefone ?? "--"}</span>
+            <button
+              type="button"
+              onClick={copiarTelefone}
+              disabled={!telefone}
+              className="inline-flex items-center gap-1 rounded border border-white/35 px-1.5 py-1 text-[10px] transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {copiado ? <Check size={12} /> : <Copy size={12} />}
+              {copiado ? "Copiado" : "Copiar"}
+            </button>
+          </div>
         </div>
       </TooltipContent>
     </Tooltip>

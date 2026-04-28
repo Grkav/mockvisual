@@ -554,6 +554,8 @@ interface TrackingMarkerMock {
   rotaAtual?: string;
   tarefaAtual?: string;
   sequenciaAtual?: string;
+  clienteAtual?: string;
+  proximoCliente?: string;
 }
 
 interface LocalizacaoFicticia {
@@ -624,6 +626,9 @@ const MAP_FIT_WIDTH_RATIO = 0.62;
 const MAP_FIT_HEIGHT_RATIO = 0.52;
 const MAP_MIN_ZOOM = 3;
 const MAP_MAX_ZOOM = 18;
+const VEICULO_TOOLTIP_WIDTH_PX = 280;
+const VEICULO_TOOLTIP_HEIGHT_PX = 120;
+const VEICULO_TOOLTIP_MARGIN_PX = 8;
 
 function slugify(value: string): string {
   return value
@@ -700,6 +705,8 @@ function montarTrackingMarkersMock(veiculo: Veiculo, pedidosBase?: Pedido[]): Tr
   const tarefaAtualLabel = tarefa?.idTarefa ?? "--";
   const sequenciaAtualLabel =
     ordemRotaAtual && totalSequenciasRota > 0 ? `${ordemRotaAtual} de ${totalSequenciasRota}` : "--";
+  const clienteAtualLabel = normalizarNomeLocal(tarefa?.atual) || "--";
+  const proximoClienteLabel = normalizarNomeLocal(tarefa?.proximoCliente) || "--";
   const origemNome =
     tarefa?.timeline.find((item) => item.tipo === "galpao")?.nome ??
     GALPAO_POR_OPERACAO[veiculo.operacao] ??
@@ -743,6 +750,8 @@ function montarTrackingMarkersMock(veiculo: Veiculo, pedidosBase?: Pedido[]): Tr
       rotaAtual: rotaAtualLabel,
       tarefaAtual: tarefaAtualLabel,
       sequenciaAtual: sequenciaAtualLabel,
+      clienteAtual: clienteAtualLabel,
+      proximoCliente: proximoClienteLabel,
     },
   ];
 
@@ -877,6 +886,7 @@ function StreetMapMock({
 }) {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const [mapWidthPx, setMapWidthPx] = useState(MAP_DEFAULT_WIDTH_PX);
+  const [hoveredVehicleId, setHoveredVehicleId] = useState<string | null>(null);
   const mapWidth = Math.max(320, mapWidthPx);
 
   useEffect(() => {
@@ -1004,6 +1014,32 @@ function StreetMapMock({
       y: worldY - topLeftY,
     };
   });
+  const markerVeiculoHover =
+    hoveredVehicleId
+      ? markersComTela.find((marker) => marker.entityID === hoveredVehicleId && marker.tipo === "veiculo") ?? null
+      : null;
+
+  useEffect(() => {
+    if (!hoveredVehicleId) return;
+    const aindaExiste = markersComTela.some((marker) => marker.entityID === hoveredVehicleId && marker.tipo === "veiculo");
+    if (!aindaExiste) setHoveredVehicleId(null);
+  }, [hoveredVehicleId, markersComTela]);
+
+  const tooltipVeiculoPos = useMemo(() => {
+    if (!markerVeiculoHover) return null;
+    const leftIdeal = markerVeiculoHover.x - VEICULO_TOOLTIP_WIDTH_PX / 2;
+    const left = Math.max(
+      VEICULO_TOOLTIP_MARGIN_PX,
+      Math.min(leftIdeal, mapWidth - VEICULO_TOOLTIP_WIDTH_PX - VEICULO_TOOLTIP_MARGIN_PX),
+    );
+    const topAbaixo = markerVeiculoHover.y + 16;
+    const cabeAbaixo = topAbaixo + VEICULO_TOOLTIP_HEIGHT_PX <= MAP_HEIGHT_PX - VEICULO_TOOLTIP_MARGIN_PX;
+    const top = cabeAbaixo
+      ? topAbaixo
+      : Math.max(VEICULO_TOOLTIP_MARGIN_PX, markerVeiculoHover.y - VEICULO_TOOLTIP_HEIGHT_PX - 16);
+    return { left, top };
+  }, [mapWidth, markerVeiculoHover]);
+
   const aplicarZoom = (targetZoom: number, focalX: number, focalY: number) => {
     setView((prev) => {
       const base = prev ?? initialView;
@@ -1111,20 +1147,17 @@ function StreetMapMock({
           key={marker.entityID}
           className="group absolute -translate-x-1/2 -translate-y-1/2"
           style={{ left: marker.x, top: marker.y }}
+          onMouseEnter={() => {
+            if (marker.tipo === "veiculo") setHoveredVehicleId(marker.entityID);
+          }}
+          onMouseLeave={() => {
+            if (marker.tipo === "veiculo") setHoveredVehicleId((atual) => (atual === marker.entityID ? null : atual));
+          }}
         >
           <IconeMarcadorLocalizacao marker={marker} />
           {marker.tipo === "origem" && (
             <div className="pointer-events-none absolute left-1/2 top-[calc(100%+6px)] z-20 hidden w-max max-w-[260px] -translate-x-1/2 rounded border border-slate-200 bg-white px-2 py-1.5 text-[10px] text-slate-700 shadow-lg group-hover:block">
               <div className="font-semibold text-slate-900">Galpão: {marker.nome}</div>
-            </div>
-          )}
-          {marker.tipo === "veiculo" && (
-            <div className="pointer-events-none absolute left-1/2 top-[calc(100%+6px)] z-20 hidden w-max max-w-[280px] -translate-x-1/2 rounded border border-slate-200 bg-white px-2 py-1.5 text-[10px] text-slate-700 shadow-lg group-hover:block">
-              <div className="font-semibold text-slate-900">{marker.nome}</div>
-              <div className="mt-0.5 text-slate-600">{marker.descricao}</div>
-              <div className="mt-0.5 text-slate-600">Tarefa atual: {marker.tarefaAtual ?? "--"}</div>
-              <div className="text-slate-600">Rota atual: {marker.rotaAtual ?? "--"}</div>
-              <div className="text-slate-600">Sequência: {marker.sequenciaAtual ?? "--"}</div>
             </div>
           )}
           {marker.tipo === "destino" && (
@@ -1138,6 +1171,21 @@ function StreetMapMock({
           )}
         </div>
       ))}
+
+      {markerVeiculoHover && tooltipVeiculoPos && (
+        <div
+          className="pointer-events-none absolute z-30 w-[280px] rounded border border-slate-200 bg-white px-2 py-1.5 text-[10px] text-slate-700 shadow-lg"
+          style={{ left: tooltipVeiculoPos.left, top: tooltipVeiculoPos.top }}
+        >
+          <div className="font-semibold text-slate-900">{markerVeiculoHover.nome}</div>
+          <div className="mt-0.5 text-slate-600">{markerVeiculoHover.descricao}</div>
+          <div className="mt-0.5 text-slate-600">Tarefa atual: {markerVeiculoHover.tarefaAtual ?? "--"}</div>
+          <div className="text-slate-600">Rota atual: {markerVeiculoHover.rotaAtual ?? "--"}</div>
+          <div className="text-slate-600">Sequência: {markerVeiculoHover.sequenciaAtual ?? "--"}</div>
+          <div className="text-slate-600">Cliente atual: {markerVeiculoHover.clienteAtual ?? "--"}</div>
+          <div className="text-slate-600">Próximo cliente: {markerVeiculoHover.proximoCliente ?? "--"}</div>
+        </div>
+      )}
 
       <div className="absolute left-2 top-2 rounded bg-white/90 px-2 py-1 text-[10px] text-gray-700 shadow">
         Mapa interativo: arraste, zoom no scroll e duplo clique
@@ -1495,7 +1543,9 @@ function ModalMapaVeiculoInner({
         <div className="flex items-center px-5 py-3 bg-[#1a3c6e] text-white">
           <div>
             <h2 className="text-sm font-semibold">Localização do Veículo</h2>
-            <p className="text-blue-200 text-xs">{veiculo.placa} - {veiculo.motorista}</p>
+            <p className="text-blue-200 text-xs">
+              {veiculo.placa} - <EquipeContatoTooltip nome={veiculo.motorista} />
+            </p>
           </div>
         </div>
 
@@ -1634,6 +1684,12 @@ function ModalMapaVeiculoInner({
                 Endereço atual: {posicaoVeiculo.endereco}
               </button>
             )}
+            <span className="rounded bg-slate-50 border border-slate-200 px-2 py-1 text-slate-700">
+              Motorista: <EquipeContatoTooltip nome={veiculo.motorista} />
+            </span>
+            <span className="rounded bg-slate-50 border border-slate-200 px-2 py-1 text-slate-700">
+              Ajudante: <EquipeContatoTooltip nome={veiculo.ajudante} />
+            </span>
             {origem && (
               <button
                 type="button"
@@ -1703,15 +1759,21 @@ function ModalMapaVeiculoInner({
             <div>
               <h3 className="text-xs font-semibold text-gray-700 uppercase mb-2">Motorista</h3>
               <div className="space-y-1 text-xs">
+                <div className="flex justify-between border-b border-gray-100 pb-0.5">
+                  <span className="text-gray-500">Nome:</span>
+                  <span className="font-medium text-gray-800"><EquipeContatoTooltip nome={veiculo.motorista} /></span>
+                </div>
+                <div className="flex justify-between border-b border-gray-100 pb-0.5">
+                  <span className="text-gray-500">Ajudante:</span>
+                  <span className="font-medium text-gray-800"><EquipeContatoTooltip nome={veiculo.ajudante} /></span>
+                </div>
                 {[
-                  ["Nome", veiculo.motorista],
-                  ["Ajudante", veiculo.ajudante],
                   ["Roteirizado", veiculo.roteirizado ? "Sim" : "Não"],
                   ["Dt. Roteirização", veiculo.dataRoteirizacao || "-"],
                 ].map(([k, v]) => (
                   <div key={k} className="flex justify-between border-b border-gray-100 pb-0.5">
                     <span className="text-gray-500">{k}:</span>
-                    <span className="font-medium text-gray-800">{v as string}</span>
+                    <span className="font-medium text-gray-800">{v}</span>
                   </div>
                 ))}
               </div>
