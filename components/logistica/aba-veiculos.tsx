@@ -768,7 +768,15 @@ function IconeMarcadorLocalizacao({ marker }: { marker: TrackingMarkerMock | Mar
   );
 }
 
-function StreetMapMock({ markers }: { markers: TrackingMarkerMock[] }) {
+function StreetMapMock({
+  markers,
+  centerTarget,
+  recenterRequest,
+}: {
+  markers: TrackingMarkerMock[];
+  centerTarget?: { lat: number; lng: number } | null;
+  recenterRequest?: number;
+}) {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const [mapWidthPx, setMapWidthPx] = useState(MAP_DEFAULT_WIDTH_PX);
   const mapWidth = Math.max(320, mapWidthPx);
@@ -836,6 +844,21 @@ function StreetMapMock({ markers }: { markers: TrackingMarkerMock[] }) {
   useEffect(() => {
     setView(initialView);
   }, [initialView]);
+
+  useEffect(() => {
+    const targetLat = centerTarget?.lat;
+    const targetLng = centerTarget?.lng;
+    if (typeof targetLat !== "number" || typeof targetLng !== "number" || !recenterRequest) return;
+    setView((prev) => {
+      const base = prev ?? initialView;
+      if (!base) return prev;
+      return {
+        ...base,
+        centerWorldX: longitudeToWorldX(targetLng, base.zoom),
+        centerWorldY: latitudeToWorldY(targetLat, base.zoom),
+      };
+    });
+  }, [centerTarget, recenterRequest, initialView]);
 
   const activeView = view ?? initialView;
   if (!activeView) {
@@ -1082,6 +1105,13 @@ function ModalMapaVeiculoInner({
     () => [...new Set(pedidosDoVeiculo.map((pedido) => pedido.cliente))].sort((a, b) => a.localeCompare(b)),
     [pedidosDoVeiculo]
   );
+  const pedidosPorCliente = useMemo(() => {
+    const mapa = new Map<string, number>();
+    for (const pedido of pedidosDoVeiculo) {
+      mapa.set(pedido.cliente, (mapa.get(pedido.cliente) ?? 0) + 1);
+    }
+    return mapa;
+  }, [pedidosDoVeiculo]);
   const pedidoFocoNoVeiculo = useMemo(() => {
     if (!pedidoFoco) return null;
     return pedidosDoVeiculo.find((pedido) => pedido.nPedido === pedidoFoco.nPedido) ?? null;
@@ -1092,12 +1122,20 @@ function ModalMapaVeiculoInner({
   const dropdownClientesRef = useRef<HTMLDivElement | null>(null);
   const [pedidosSelecionados, setPedidosSelecionados] = useState<string[]>([]);
   const [clientesSelecionados, setClientesSelecionados] = useState<string[]>([]);
-  const [autoAtualizarModal, setAutoAtualizarModal] = useState(false);
-  const [autoCountdownModal, setAutoCountdownModal] = useState(30);
-  const [lastUpdateModal, setLastUpdateModal] = useState("");
+  const [autoAtualizarMapa, setAutoAtualizarMapa] = useState(false);
+  const [autoCountdownMapa, setAutoCountdownMapa] = useState(30);
+  const [lastUpdateMapa, setLastUpdateMapa] = useState("");
+  const [autoAtualizarPedidos, setAutoAtualizarPedidos] = useState(false);
+  const [autoCountdownPedidos, setAutoCountdownPedidos] = useState(30);
+  const [lastUpdatePedidos, setLastUpdatePedidos] = useState("");
+  const [centerTargetMapa, setCenterTargetMapa] = useState<{ lat: number; lng: number }>({
+    lat: veiculo.lat,
+    lng: veiculo.lng,
+  });
+  const [recenterVehicleRequest, setRecenterVehicleRequest] = useState(0);
 
-  const handleAtualizarModal = useCallback(() => {
-    setLastUpdateModal(
+  const handleAtualizarMapa = useCallback(() => {
+    setLastUpdateMapa(
       new Date().toLocaleString("pt-BR", {
         day: "2-digit",
         month: "2-digit",
@@ -1108,6 +1146,22 @@ function ModalMapaVeiculoInner({
       })
     );
   }, []);
+  const handleAtualizarPedidos = useCallback(() => {
+    setLastUpdatePedidos(
+      new Date().toLocaleString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })
+    );
+  }, []);
+  const centralizarMapaNoVeiculo = useCallback(() => {
+    setCenterTargetMapa({ lat: veiculo.lat, lng: veiculo.lng });
+    setRecenterVehicleRequest((anterior) => anterior + 1);
+  }, [veiculo.lat, veiculo.lng]);
 
   useEffect(() => {
     if (pedidoFocoNoVeiculo) {
@@ -1120,22 +1174,27 @@ function ModalMapaVeiculoInner({
   }, [pedidoFocoNoVeiculo, pedidosDoVeiculo, clientesDoVeiculo]);
 
   useEffect(() => {
-    handleAtualizarModal();
-  }, [handleAtualizarModal]);
+    setCenterTargetMapa({ lat: veiculo.lat, lng: veiculo.lng });
+  }, [veiculo.lat, veiculo.lng]);
 
   useEffect(() => {
-    if (!autoAtualizarModal) {
-      setAutoCountdownModal(30);
+    handleAtualizarMapa();
+    handleAtualizarPedidos();
+  }, [handleAtualizarMapa, handleAtualizarPedidos]);
+
+  useEffect(() => {
+    if (!autoAtualizarMapa) {
+      setAutoCountdownMapa(30);
       return;
     }
 
-    handleAtualizarModal();
-    setAutoCountdownModal(30);
+    handleAtualizarMapa();
+    setAutoCountdownMapa(30);
 
     const interval = setInterval(() => {
-      setAutoCountdownModal((prev) => {
+      setAutoCountdownMapa((prev) => {
         if (prev <= 1) {
-          handleAtualizarModal();
+          handleAtualizarMapa();
           return 30;
         }
         return prev - 1;
@@ -1143,7 +1202,29 @@ function ModalMapaVeiculoInner({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [autoAtualizarModal, handleAtualizarModal]);
+  }, [autoAtualizarMapa, handleAtualizarMapa]);
+
+  useEffect(() => {
+    if (!autoAtualizarPedidos) {
+      setAutoCountdownPedidos(30);
+      return;
+    }
+
+    handleAtualizarPedidos();
+    setAutoCountdownPedidos(30);
+
+    const interval = setInterval(() => {
+      setAutoCountdownPedidos((prev) => {
+        if (prev <= 1) {
+          handleAtualizarPedidos();
+          return 30;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [autoAtualizarPedidos, handleAtualizarPedidos]);
 
   useEffect(() => {
     if (!dropdownPedidosAberto) return;
@@ -1303,6 +1384,9 @@ function ModalMapaVeiculoInner({
                 className="inline-flex items-center gap-1 rounded border border-blue-200 bg-blue-50 px-2 py-1 text-blue-700"
               >
                 <span>{resumoPedidosSelecionados}</span>
+                <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700">
+                  {pedidosSelecionadosDetalhe.length}/{pedidosDoVeiculo.length}
+                </span>
                 <ChevronDown size={12} className={`transition-transform ${dropdownPedidosAberto ? "rotate-180" : ""}`} />
               </button>
               {dropdownPedidosAberto && (
@@ -1352,6 +1436,9 @@ function ModalMapaVeiculoInner({
                 className="inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-emerald-700"
               >
                 <span>{resumoClientesSelecionados}</span>
+                <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
+                  {clientesSelecionadosDetalhe.length}/{clientesDoVeiculo.length}
+                </span>
                 <ChevronDown size={12} className={`transition-transform ${dropdownClientesAberto ? "rotate-180" : ""}`} />
               </button>
               {dropdownClientesAberto && (
@@ -1384,7 +1471,12 @@ function ModalMapaVeiculoInner({
                           checked={clientesSelecionadosSet.has(cliente)}
                           onChange={() => alternarClienteSelecionado(cliente)}
                         />
-                        <span className="truncate text-[11px] text-gray-700">{cliente}</span>
+                        <span className="flex w-full items-center justify-between gap-2">
+                          <span className="truncate text-[11px] text-gray-700">{cliente}</span>
+                          <span className="shrink-0 text-[10px] text-emerald-700">
+                            {pedidosPorCliente.get(cliente) ?? 0} pedido(s)
+                          </span>
+                        </span>
                       </label>
                     ))}
                   </div>
@@ -1397,37 +1489,58 @@ function ModalMapaVeiculoInner({
             <span className="rounded bg-emerald-50 border border-emerald-200 px-2 py-1 text-emerald-700">
               Clientes no mapa: {destinos.length}
             </span>
-            <span className="rounded bg-slate-50 border border-slate-200 px-2 py-1 text-slate-700">
+            <button
+              type="button"
+              onClick={centralizarMapaNoVeiculo}
+              className="rounded bg-slate-50 border border-slate-200 px-2 py-1 text-slate-700 hover:bg-slate-100 cursor-pointer"
+              title="Centralizar mapa na posição atual do veículo"
+            >
               Posição atual: {veiculo.lat.toFixed(6)}, {veiculo.lng.toFixed(6)}
-            </span>
+            </button>
             {posicaoVeiculo?.endereco && (
-              <span className="rounded bg-slate-50 border border-slate-200 px-2 py-1 text-slate-700">
+              <button
+                type="button"
+                onClick={centralizarMapaNoVeiculo}
+                className="rounded bg-slate-50 border border-slate-200 px-2 py-1 text-slate-700 hover:bg-slate-100 cursor-pointer"
+                title="Centralizar mapa na posição atual do veículo"
+              >
                 Endereço atual: {posicaoVeiculo.endereco}
-              </span>
+              </button>
             )}
             {origem && (
-              <span className="rounded bg-indigo-50 border border-indigo-200 px-2 py-1 text-indigo-700">
+              <button
+                type="button"
+                onClick={() => {
+                  const latOrigem = Number(origem.latitude);
+                  const lngOrigem = Number(origem.longitude);
+                  if (!Number.isFinite(latOrigem) || !Number.isFinite(lngOrigem)) return;
+                  setCenterTargetMapa({ lat: latOrigem, lng: lngOrigem });
+                  setRecenterVehicleRequest((anterior) => anterior + 1);
+                }}
+                className="rounded bg-indigo-50 border border-indigo-200 px-2 py-1 text-indigo-700 hover:bg-indigo-100 cursor-pointer"
+                title="Centralizar mapa no ponto de origem"
+              >
                 Origem: {origem.nome}
-              </span>
+              </button>
             )}
             <span className="rounded bg-white border border-slate-200 px-2 py-1 text-[11px] text-slate-700">
-              Última atualização: <strong className="text-gray-800">{lastUpdateModal}</strong>
+              Última atualização: <strong className="text-gray-800">{lastUpdateMapa}</strong>
             </span>
             <button
               type="button"
-              onClick={() => setAutoAtualizarModal(!autoAtualizarModal)}
+              onClick={() => setAutoAtualizarMapa(!autoAtualizarMapa)}
               className={`flex items-center gap-1.5 h-7 px-2.5 text-[11px] rounded border transition-colors ${
-                autoAtualizarModal
+                autoAtualizarMapa
                   ? "bg-green-50 border-green-400 text-green-700"
                   : "bg-white border-gray-300 text-gray-600"
               }`}
             >
-              <span className={`w-2 h-2 rounded-full ${autoAtualizarModal ? "bg-green-500 animate-pulse" : "bg-gray-300"}`} />
-              {autoAtualizarModal ? `AUTO - ${autoCountdownModal}s` : "OFF"}
+              <span className={`w-2 h-2 rounded-full ${autoAtualizarMapa ? "bg-green-500 animate-pulse" : "bg-gray-300"}`} />
+              {autoAtualizarMapa ? `AUTO - ${autoCountdownMapa}s` : "OFF"}
             </button>
             <button
               type="button"
-              onClick={handleAtualizarModal}
+              onClick={handleAtualizarMapa}
               className="flex items-center gap-1.5 h-7 px-2.5 text-[11px] rounded border border-blue-400 text-blue-700 hover:bg-blue-50 transition-colors"
             >
               <RefreshCw size={12} />
@@ -1435,7 +1548,11 @@ function ModalMapaVeiculoInner({
             </button>
           </div>
 
-          <StreetMapMock markers={trackingMarkers} />
+          <StreetMapMock
+            markers={trackingMarkers}
+            centerTarget={centerTargetMapa}
+            recenterRequest={recenterVehicleRequest}
+          />
 
           <div className="p-4 grid grid-cols-2 gap-4">
             <div>
@@ -1483,23 +1600,23 @@ function ModalMapaVeiculoInner({
                   </span>
                   <div className="flex items-center gap-2 flex-wrap justify-end">
                     <span className="rounded bg-white border border-slate-200 px-2 py-1 text-[11px] text-slate-700">
-                      Última atualização: <strong className="text-gray-800">{lastUpdateModal}</strong>
+                      Última atualização: <strong className="text-gray-800">{lastUpdatePedidos}</strong>
                     </span>
                     <button
                       type="button"
-                      onClick={() => setAutoAtualizarModal(!autoAtualizarModal)}
+                      onClick={() => setAutoAtualizarPedidos(!autoAtualizarPedidos)}
                       className={`flex items-center gap-1.5 h-7 px-2.5 text-[11px] rounded border transition-colors ${
-                        autoAtualizarModal
+                        autoAtualizarPedidos
                           ? "bg-green-50 border-green-400 text-green-700"
                           : "bg-white border-gray-300 text-gray-600"
                       }`}
                     >
-                      <span className={`w-2 h-2 rounded-full ${autoAtualizarModal ? "bg-green-500 animate-pulse" : "bg-gray-300"}`} />
-                      {autoAtualizarModal ? `AUTO - ${autoCountdownModal}s` : "OFF"}
+                      <span className={`w-2 h-2 rounded-full ${autoAtualizarPedidos ? "bg-green-500 animate-pulse" : "bg-gray-300"}`} />
+                      {autoAtualizarPedidos ? `AUTO - ${autoCountdownPedidos}s` : "OFF"}
                     </button>
                     <button
                       type="button"
-                      onClick={handleAtualizarModal}
+                      onClick={handleAtualizarPedidos}
                       className="flex items-center gap-1.5 h-7 px-2.5 text-[11px] rounded border border-blue-400 text-blue-700 hover:bg-blue-50 transition-colors"
                     >
                       <RefreshCw size={12} />
@@ -1838,13 +1955,13 @@ export function AbaVeiculos({ veiculos, filtroStatus, filtroTransportadoraGlobal
   );
 
   const uniq = (arr: string[]) => [...new Set(arr)].filter(Boolean).sort();
-  function abrirMapaEmNovaAba(veiculo: Veiculo) {
+  function abrirMapaEmNovaPagina(veiculo: Veiculo) {
     const url = new URL(window.location.href);
     url.searchParams.set("tab", "veiculos");
     url.searchParams.set("modal", "veiculo");
     url.searchParams.set("placa", veiculo.placa);
     url.searchParams.delete("pedido");
-    window.open(url.toString(), "_blank", "noopener,noreferrer");
+    window.location.assign(url.toString());
   }
 
   return (
@@ -1925,7 +2042,7 @@ export function AbaVeiculos({ veiculos, filtroStatus, filtroTransportadoraGlobal
                 veiculo={v}
                 filtroStatus={filtroStatus}
                 index={index + 1}
-                onAbrirMapa={abrirMapaEmNovaAba}
+                onAbrirMapa={abrirMapaEmNovaPagina}
               />
             ))}
             <TotalRow>
