@@ -357,7 +357,7 @@ function LinhaPedidoModalMapa({
         </td>
         <td className="px-3 py-2 text-gray-500">{pedido.nRemessa}</td>
         <td className="px-3 py-2"><StatusBadge status={pedido.status} /></td>
-        <td className="px-3 py-2 text-center">{`${pedido.qtdVolumes}/${pedido.qtdVolumesTotal}`}</td>
+        <td className="px-3 py-2 text-center" style={{ textAlign: "center" }}>{`${pedido.qtdVolumes}/${pedido.qtdVolumesTotal}`}</td>
         <td className="px-3 py-2">{fmt(pedido.peso, "peso")}</td>
         <td className="px-3 py-2">{fmt(pedido.cubagem, "cubagem")}</td>
         <td className="px-3 py-2 font-medium">{fmt(pedido.valorTotal, "moeda")}</td>
@@ -427,7 +427,7 @@ function LinhaClienteModalMapa({
             Cliente
           </span>
         </td>
-        <td className="px-3 py-2 text-center font-medium">{`${totaisCliente.volumes}/${totaisCliente.volumesTotal}`}</td>
+        <td className="px-3 py-2 text-center font-medium" style={{ textAlign: "center" }}>{`${totaisCliente.volumes}/${totaisCliente.volumesTotal}`}</td>
         <td className="px-3 py-2 font-medium">{fmt(totaisCliente.peso, "peso")}</td>
         <td className="px-3 py-2 font-medium">{fmt(totaisCliente.cubagem, "cubagem")}</td>
         <td className="px-3 py-2 font-semibold">{fmt(totaisCliente.valor, "moeda")}</td>
@@ -1632,7 +1632,13 @@ function ModalMapaVeiculoInner({
                       <th className="w-7" />
                       <th className="px-3 py-2 text-left text-[10px] font-semibold text-gray-600 uppercase">#</th>
                       {["Cliente / Pedido", "Remessa", "Status", "Vol.", "Peso", "Cubagem", "Valor", "Ressalva"].map((h) => (
-                        <th key={h} className="px-3 py-2 text-left text-[10px] font-semibold text-gray-600 uppercase">{h}</th>
+                        <th
+                          key={h}
+                          className={`px-3 py-2 text-[10px] font-semibold text-gray-600 uppercase ${h === "Vol." ? "text-center" : "text-left"}`}
+                          style={h === "Vol." ? { textAlign: "center" } : undefined}
+                        >
+                          {h}
+                        </th>
                       ))}
                     </tr>
                   </thead>
@@ -1650,7 +1656,7 @@ function ModalMapaVeiculoInner({
                         <td />
                         <td className="px-3 py-2 text-[11px] text-gray-500">#</td>
                         <td colSpan={3} className="px-3 py-2 text-[10px] text-gray-500 uppercase">Total</td>
-                        <td className="px-3 py-2 text-[11px] text-center">{`${totaisPedidos.volumes}/${totaisPedidos.volumesTotal}`}</td>
+                        <td className="px-3 py-2 text-[11px] text-center" style={{ textAlign: "center" }}>{`${totaisPedidos.volumes}/${totaisPedidos.volumesTotal}`}</td>
                         <td className="px-3 py-2 text-[11px]">{fmt(totaisPedidos.peso, "peso")}</td>
                         <td className="px-3 py-2 text-[11px]">{fmt(totaisPedidos.cubagem, "cubagem")}</td>
                         <td className="px-3 py-2 text-[11px]">{fmt(totaisPedidos.valor, "moeda")}</td>
