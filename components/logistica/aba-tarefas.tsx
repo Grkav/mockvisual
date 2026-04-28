@@ -1485,7 +1485,7 @@ function LinhaTarefa({
 interface AbaTarefasProps {
   tarefas: Tarefa[];
   filtroStatus: StatusPedido[];
-  filtroOperacaoGlobal: string;
+  filtroOperacaoGlobal: string[];
 }
 
 export function AbaTarefas({ tarefas, filtroStatus, filtroOperacaoGlobal }: AbaTarefasProps) {
@@ -1550,7 +1550,7 @@ export function AbaTarefas({ tarefas, filtroStatus, filtroOperacaoGlobal }: AbaT
   const uniq = (arr: string[]) => [...new Set(arr)].filter(Boolean).sort();
 
   const filtradosBase = sorted.filter((t) => {
-    if (filtroOperacaoGlobal && t.operacao !== filtroOperacaoGlobal) return false;
+    if (filtroOperacaoGlobal.length > 0 && !filtroOperacaoGlobal.includes(t.operacao)) return false;
     if (filtroStatus.length > 0) {
       const temPedidoFiltrado = t.listaPedidos.some((nPed) => {
         const p = PEDIDOS.find((p) => p.nPedido === nPed);
@@ -1644,7 +1644,9 @@ export function AbaTarefas({ tarefas, filtroStatus, filtroOperacaoGlobal }: AbaT
     url.searchParams.set("modal", "veiculo");
     url.searchParams.set("placa", placa);
     url.searchParams.delete("pedido");
-    window.open(url.toString(), "_blank", "noopener,noreferrer");
+    const targetAba = `mapa-veiculo-${placa.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase() || "padrao"}`;
+    const aba = window.open(url.toString(), targetAba);
+    aba?.focus();
   }
 
   return (

@@ -550,6 +550,7 @@ interface TrackingMarkerMock {
   nome: string;
   descricao: string;
   pedidosCliente?: string[];
+  sequenciaCliente?: number;
   rotaAtual?: string;
   tarefaAtual?: string;
   sequenciaAtual?: string;
@@ -798,6 +799,7 @@ function montarTrackingMarkersMock(veiculo: Veiculo, pedidosBase?: Pedido[]): Tr
         ? `Pedidos: ${pedidosCliente.map((pedido) => pedido.nPedido).join(", ")}`
         : "Cliente vinculado à tarefa",
       pedidosCliente: pedidosCliente.map((pedido) => pedido.nPedido),
+      sequenciaCliente: idx + 1,
     });
   });
 
@@ -1128,6 +1130,7 @@ function StreetMapMock({
           {marker.tipo === "destino" && (
             <div className="pointer-events-none absolute left-1/2 top-[calc(100%+6px)] z-20 hidden w-max max-w-[260px] -translate-x-1/2 rounded border border-slate-200 bg-white px-2 py-1.5 text-[10px] text-slate-700 shadow-lg group-hover:block">
               <div className="font-semibold text-slate-900">{marker.nome}</div>
+              <div className="mt-0.5 text-slate-600">Sequência: {marker.sequenciaCliente ?? "--"}</div>
               <div className="mt-0.5 text-slate-600">
                 Pedidos: {marker.pedidosCliente && marker.pedidosCliente.length > 0 ? marker.pedidosCliente.join(", ") : "sem pedidos"}
               </div>
@@ -2156,7 +2159,9 @@ export function AbaVeiculos({ veiculos, filtroStatus, filtroTransportadoraGlobal
     url.searchParams.set("modal", "veiculo");
     url.searchParams.set("placa", veiculo.placa);
     url.searchParams.delete("pedido");
-    window.location.assign(url.toString());
+    const targetAba = `mapa-veiculo-${veiculo.placa.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase() || "padrao"}`;
+    const aba = window.open(url.toString(), targetAba);
+    aba?.focus();
   }
 
   return (

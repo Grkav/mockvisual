@@ -407,7 +407,7 @@ interface AbaPedidosProps {
   filtroPrioridade: string;
   filtroPedidoGlobal: string;
   filtroRemessaGlobal: string;
-  filtroOperacaoGlobal: string;
+  filtroOperacaoGlobal: string[];
 }
 
 export function AbaPedidos({ pedidos, filtroStatus, filtroPrioridade, filtroPedidoGlobal, filtroRemessaGlobal, filtroOperacaoGlobal }: AbaPedidosProps) {
@@ -450,7 +450,7 @@ export function AbaPedidos({ pedidos, filtroStatus, filtroPrioridade, filtroPedi
     if (filtroPrioridade && p.prioridade !== filtroPrioridade) return false;
     if (filtroPedidoGlobal && !p.nPedido.toLowerCase().includes(filtroPedidoGlobal.toLowerCase())) return false;
     if (filtroRemessaGlobal && !p.nRemessa.toLowerCase().includes(filtroRemessaGlobal.toLowerCase())) return false;
-    if (filtroOperacaoGlobal && p.operacao !== filtroOperacaoGlobal) return false;
+    if (filtroOperacaoGlobal.length > 0 && !filtroOperacaoGlobal.includes(p.operacao)) return false;
     if (filtroPedido && !p.nPedido.toLowerCase().includes(filtroPedido.toLowerCase())) return false;
     if (filtroRemessa && !p.nRemessa.toLowerCase().includes(filtroRemessa.toLowerCase())) return false;
     if (filtroCliente && p.cliente !== filtroCliente) return false;
@@ -495,7 +495,9 @@ export function AbaPedidos({ pedidos, filtroStatus, filtroPrioridade, filtroPedi
     url.searchParams.set("modal", "veiculo");
     url.searchParams.set("placa", pedido.placa);
     url.searchParams.set("pedido", pedido.nPedido);
-    window.open(url.toString(), "_blank", "noopener,noreferrer");
+    const targetAba = `mapa-veiculo-${pedido.placa.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase() || "padrao"}`;
+    const aba = window.open(url.toString(), targetAba);
+    aba?.focus();
   }
 
   return (

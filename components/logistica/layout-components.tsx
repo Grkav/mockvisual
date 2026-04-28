@@ -321,6 +321,97 @@ export function SearchSelect({ placeholder, options, value, onChange, className 
   );
 }
 
+interface SearchMultiSelectProps {
+  placeholder: string;
+  options: string[];
+  values: string[];
+  onChange: (values: string[]) => void;
+  className?: string;
+}
+
+export function SearchMultiSelect({ placeholder, options, values, onChange, className = "" }: SearchMultiSelectProps) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const selectedSet = new Set(values);
+  const filtered = options.filter((o) => o.toLowerCase().includes(search.toLowerCase()));
+  const display = values.length === 0 ? placeholder : values.length === 1 ? values[0] : `${values.length} operações`;
+
+  function toggleValue(option: string) {
+    const next = new Set(selectedSet);
+    if (next.has(option)) next.delete(option);
+    else next.add(option);
+    onChange(options.filter((opt) => next.has(opt)));
+  }
+
+  function selecionarTudo() {
+    onChange([...options]);
+  }
+
+  function limparSelecao() {
+    onChange([]);
+  }
+
+  return (
+    <div className={`relative ${className}`}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1 h-8 px-2.5 text-xs bg-white border border-gray-300 rounded hover:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400 min-w-[130px] w-full"
+      >
+        <span className={`flex-1 text-left truncate ${values.length === 0 ? "text-gray-400" : "text-gray-800"}`}>{display}</span>
+        <ChevronDown size={12} className="text-gray-400 shrink-0" />
+      </button>
+      {open && (
+        <div className="absolute z-50 top-full mt-1 left-0 w-full min-w-[220px] bg-white border border-gray-200 rounded shadow-lg">
+          <div className="p-1.5 border-b border-gray-100">
+            <div className="relative">
+              <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                autoFocus
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Pesquisar..."
+                className="w-full pl-6 pr-2 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+              />
+            </div>
+          </div>
+          <div className="flex items-center justify-between px-2.5 py-1 border-b border-gray-100 bg-gray-50">
+            <button
+              onClick={selecionarTudo}
+              className="text-[10px] text-blue-600 hover:underline font-medium"
+            >
+              Selecionar tudo
+            </button>
+            <button
+              onClick={limparSelecao}
+              className="text-[10px] text-red-500 hover:underline"
+            >
+              Limpar
+            </button>
+          </div>
+          <div className="max-h-52 overflow-y-auto">
+            {filtered.map((opt) => (
+              <label key={opt} className="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-700 hover:bg-blue-50 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedSet.has(opt)}
+                  onChange={() => toggleValue(opt)}
+                  className="accent-blue-600 w-3 h-3"
+                />
+                <span className="truncate">{opt}</span>
+              </label>
+            ))}
+            {filtered.length === 0 && (
+              <p className="px-3 py-2 text-xs text-gray-400">Nenhum resultado</p>
+            )}
+          </div>
+        </div>
+      )}
+      {open && <div className="fixed inset-0 z-40" onClick={() => { setOpen(false); setSearch(""); }} />}
+    </div>
+  );
+}
+
 interface ActionDropdownButtonProps {
   label: string;
   icon?: React.ReactNode;
@@ -417,8 +508,8 @@ export function ModuleTitle() {
 interface FiltrosGlobaisProps {
   filtroData: string;
   setFiltroData: (v: string) => void;
-  filtroOperacao: string;
-  setFiltroOperacao: (v: string) => void;
+  filtroOperacao: string[];
+  setFiltroOperacao: (v: string[]) => void;
   filtroTransportadora: string;
   setFiltroTransportadora: (v: string) => void;
   filtroPrioridade: string;
@@ -471,10 +562,10 @@ export function FiltrosGlobais({
             className="h-8 pl-6 pr-3 text-xs border border-gray-300 rounded bg-white focus:outline-none focus:ring-1 focus:ring-blue-400 w-40"
           />
         </div>
-        <SearchSelect
+        <SearchMultiSelect
           placeholder="Todas Operações"
           options={operacoes}
-          value={filtroOperacao}
+          values={filtroOperacao}
           onChange={setFiltroOperacao}
         />
         <SearchSelect

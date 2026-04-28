@@ -15,7 +15,7 @@ type AbaAtiva = "veiculos" | "pedidos" | "tarefas";
 export default function AcompanhamentoPage() {
   // â”€â”€ Estado de filtros globais â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [filtroData, setFiltroData] = useState("2025-03-25");
-  const [filtroOperacao, setFiltroOperacao] = useState("");
+  const [filtroOperacao, setFiltroOperacao] = useState<string[]>([]);
   const [filtroTransportadora, setFiltroTransportadora] = useState("");
   const [filtroPrioridade, setFiltroPrioridade] = useState("");
   const [filtroPedido, setFiltroPedido] = useState("");
@@ -91,7 +91,7 @@ export default function AcompanhamentoPage() {
 
   // â”€â”€ Cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const pedidosFiltradosGlobal = PEDIDOS.filter((p) => {
-    if (filtroOperacao && p.operacao !== filtroOperacao) return false;
+    if (filtroOperacao.length > 0 && !filtroOperacao.includes(p.operacao)) return false;
     if (filtroPrioridade && p.prioridade !== filtroPrioridade) return false;
     if (filtroPedido && !p.nPedido.toLowerCase().includes(filtroPedido.toLowerCase())) return false;
     if (filtroRemessa && !p.nRemessa.toLowerCase().includes(filtroRemessa.toLowerCase())) return false;
@@ -108,7 +108,7 @@ export default function AcompanhamentoPage() {
   ];
 
   const pedidosParaAba = PEDIDOS.filter((p) => {
-    if (filtroOperacao && p.operacao !== filtroOperacao) return false;
+    if (filtroOperacao.length > 0 && !filtroOperacao.includes(p.operacao)) return false;
     if (filtroPedido && !p.nPedido.toLowerCase().includes(filtroPedido.toLowerCase())) return false;
     if (filtroRemessa && !p.nRemessa.toLowerCase().includes(filtroRemessa.toLowerCase())) return false;
     return true;
