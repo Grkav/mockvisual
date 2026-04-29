@@ -17,7 +17,7 @@ export default function AcompanhamentoPage() {
   const [filtroData, setFiltroData] = useState("2025-03-25");
   const [filtroOperacao, setFiltroOperacao] = useState<string[]>([]);
   const [filtroTransportadora, setFiltroTransportadora] = useState("");
-  const [filtroPrioridade, setFiltroPrioridade] = useState("");
+  const [filtroPrioridade, setFiltroPrioridade] = useState<string[]>([]);
   const [filtroPedido, setFiltroPedido] = useState("");
   const [filtroRemessa, setFiltroRemessa] = useState("");
   const [autoAtualizar, setAutoAtualizar] = useState(false);
@@ -92,7 +92,7 @@ export default function AcompanhamentoPage() {
   // â”€â”€ Cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const pedidosFiltradosGlobal = PEDIDOS.filter((p) => {
     if (filtroOperacao.length > 0 && !filtroOperacao.includes(p.operacao)) return false;
-    if (filtroPrioridade && p.prioridade !== filtroPrioridade) return false;
+    if (filtroPrioridade.length > 0 && !filtroPrioridade.includes(p.prioridade)) return false;
     if (filtroPedido && !p.nPedido.toLowerCase().includes(filtroPedido.toLowerCase())) return false;
     if (filtroRemessa && !p.nRemessa.toLowerCase().includes(filtroRemessa.toLowerCase())) return false;
     return true;
@@ -109,6 +109,7 @@ export default function AcompanhamentoPage() {
 
   const pedidosParaAba = PEDIDOS.filter((p) => {
     if (filtroOperacao.length > 0 && !filtroOperacao.includes(p.operacao)) return false;
+    if (filtroPrioridade.length > 0 && !filtroPrioridade.includes(p.prioridade)) return false;
     if (filtroPedido && !p.nPedido.toLowerCase().includes(filtroPedido.toLowerCase())) return false;
     if (filtroRemessa && !p.nRemessa.toLowerCase().includes(filtroRemessa.toLowerCase())) return false;
     return true;

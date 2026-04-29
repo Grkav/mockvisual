@@ -404,7 +404,7 @@ function LinhaPedido({
 interface AbaPedidosProps {
   pedidos: Pedido[];
   filtroStatus: StatusPedido[];
-  filtroPrioridade: string;
+  filtroPrioridade: string[];
   filtroPedidoGlobal: string;
   filtroRemessaGlobal: string;
   filtroOperacaoGlobal: string[];
@@ -447,7 +447,7 @@ export function AbaPedidos({ pedidos, filtroStatus, filtroPrioridade, filtroPedi
       });
       if (!combinaAlgumStatus) return false;
     }
-    if (filtroPrioridade && p.prioridade !== filtroPrioridade) return false;
+    if (filtroPrioridade.length > 0 && !filtroPrioridade.includes(p.prioridade)) return false;
     if (filtroPedidoGlobal && !p.nPedido.toLowerCase().includes(filtroPedidoGlobal.toLowerCase())) return false;
     if (filtroRemessaGlobal && !p.nRemessa.toLowerCase().includes(filtroRemessaGlobal.toLowerCase())) return false;
     if (filtroOperacaoGlobal.length > 0 && !filtroOperacaoGlobal.includes(p.operacao)) return false;

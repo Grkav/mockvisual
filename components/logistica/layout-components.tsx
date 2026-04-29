@@ -327,15 +327,16 @@ interface SearchMultiSelectProps {
   values: string[];
   onChange: (values: string[]) => void;
   className?: string;
+  selectedLabel?: string;
 }
 
-export function SearchMultiSelect({ placeholder, options, values, onChange, className = "" }: SearchMultiSelectProps) {
+export function SearchMultiSelect({ placeholder, options, values, onChange, className = "", selectedLabel = "opções" }: SearchMultiSelectProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
   const selectedSet = new Set(values);
   const filtered = options.filter((o) => o.toLowerCase().includes(search.toLowerCase()));
-  const display = values.length === 0 ? placeholder : values.length === 1 ? values[0] : `${values.length} operações`;
+  const display = values.length === 0 ? placeholder : values.length === 1 ? values[0] : `${values.length} ${selectedLabel}`;
 
   function toggleValue(option: string) {
     const next = new Set(selectedSet);
@@ -512,8 +513,8 @@ interface FiltrosGlobaisProps {
   setFiltroOperacao: (v: string[]) => void;
   filtroTransportadora: string;
   setFiltroTransportadora: (v: string) => void;
-  filtroPrioridade: string;
-  setFiltroPrioridade: (v: string) => void;
+  filtroPrioridade: string[];
+  setFiltroPrioridade: (v: string[]) => void;
   filtroPedido: string;
   setFiltroPedido: (v: string) => void;
   filtroRemessa: string;
@@ -567,12 +568,14 @@ export function FiltrosGlobais({
           options={operacoes}
           values={filtroOperacao}
           onChange={setFiltroOperacao}
+          selectedLabel="operações"
         />
-        <SearchSelect
+        <SearchMultiSelect
           placeholder="Todas Prioridades"
           options={["A", "B", "C", "D", "E", "F"]}
-          value={filtroPrioridade}
+          values={filtroPrioridade}
           onChange={setFiltroPrioridade}
+          selectedLabel="prioridades"
         />
         </div>
         
