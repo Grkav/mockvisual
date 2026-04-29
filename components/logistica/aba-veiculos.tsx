@@ -1550,188 +1550,197 @@ function ModalMapaVeiculoInner({
         </div>
 
         <div className="flex min-h-0 flex-col overflow-y-auto">
-          <div className="px-4 pt-3 flex flex-wrap gap-2 text-[11px]">
-            <div className="relative" ref={dropdownPedidosRef}>
-              <button
-                type="button"
-                onClick={() => {
-                  setDropdownPedidosAberto((valor) => !valor);
-                  setDropdownClientesAberto(false);
-                }}
-                className="inline-flex items-center gap-1 rounded border border-blue-200 bg-blue-50 px-2 py-1 text-blue-700"
-              >
-                <span>{resumoPedidosSelecionados}</span>
-                <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700">
-                  {pedidosSelecionadosDetalhe.length}/{pedidosDoVeiculo.length}
+          <div className="px-4 pt-3 space-y-2 text-[11px]">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div className="flex flex-wrap gap-2">
+                <span className="rounded bg-cyan-50 border border-cyan-200 px-2 py-1 font-medium text-cyan-700">
+                  Operação: {veiculo.operacao}
                 </span>
-                <ChevronDown size={12} className={`transition-transform ${dropdownPedidosAberto ? "rotate-180" : ""}`} />
-              </button>
-              {dropdownPedidosAberto && (
-                <div className="absolute left-0 top-[calc(100%+6px)] z-20 w-[320px] rounded border border-blue-200 bg-white shadow-lg">
-                  <div className="flex items-center justify-between border-b border-gray-100 px-2 py-1.5">
-                    <button
-                      type="button"
-                      onClick={() => aplicarFiltroPedidos(pedidosDoVeiculo.map((pedido) => pedido.nPedido))}
-                      className="text-[10px] font-medium text-blue-600 hover:underline"
-                    >
-                      Selecionar todos
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => aplicarFiltroPedidos([])}
-                      className="text-[10px] font-medium text-red-600 hover:underline"
-                    >
-                      Limpar
-                    </button>
-                  </div>
-                  <div className="max-h-52 overflow-y-auto p-1">
-                    {pedidosDoVeiculo.map((pedido) => (
-                      <label
-                        key={pedido.id}
-                        className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-blue-50"
-                      >
-                        <input
-                          type="checkbox"
-                          className="h-3 w-3 accent-blue-600"
-                          checked={pedidosSelecionadosSet.has(pedido.nPedido)}
-                          onChange={() => alternarPedidoSelecionado(pedido.nPedido)}
-                        />
-                        <span className="font-mono text-[10px] text-blue-700">Pedido {pedido.nPedido}</span>
-                      </label>
-                    ))}
-                  </div>
+                {origem && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const latOrigem = Number(origem.latitude);
+                      const lngOrigem = Number(origem.longitude);
+                      if (!Number.isFinite(latOrigem) || !Number.isFinite(lngOrigem)) return;
+                      setCenterTargetMapa({ lat: latOrigem, lng: lngOrigem });
+                      setRecenterVehicleRequest((anterior) => anterior + 1);
+                    }}
+                    className="rounded bg-indigo-50 border border-indigo-200 px-2 py-1 text-indigo-700 hover:bg-indigo-100 cursor-pointer"
+                    title="Centralizar mapa no ponto de origem"
+                  >
+                    Origem: {origem.nome}
+                  </button>
+                )}
+                <div className="relative" ref={dropdownClientesRef}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDropdownClientesAberto((valor) => !valor);
+                      setDropdownPedidosAberto(false);
+                    }}
+                    className="inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-emerald-700"
+                  >
+                    <span>{resumoClientesSelecionados}</span>
+                    <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
+                      {clientesSelecionadosDetalhe.length}/{clientesDoVeiculo.length}
+                    </span>
+                    <ChevronDown size={12} className={`transition-transform ${dropdownClientesAberto ? "rotate-180" : ""}`} />
+                  </button>
+                  {dropdownClientesAberto && (
+                    <div className="absolute left-0 top-[calc(100%+6px)] z-20 w-[320px] rounded border border-emerald-200 bg-white shadow-lg">
+                      <div className="flex items-center justify-between border-b border-gray-100 px-2 py-1.5">
+                        <button
+                          type="button"
+                          onClick={() => aplicarFiltroClientes(clientesDoVeiculo)}
+                          className="text-[10px] font-medium text-emerald-700 hover:underline"
+                        >
+                          Selecionar todos
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => aplicarFiltroClientes([])}
+                          className="text-[10px] font-medium text-red-600 hover:underline"
+                        >
+                          Limpar
+                        </button>
+                      </div>
+                      <div className="max-h-52 overflow-y-auto p-1">
+                        {clientesDoVeiculo.map((cliente) => (
+                          <label
+                            key={cliente}
+                            className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-emerald-50"
+                          >
+                            <input
+                              type="checkbox"
+                              className="h-3 w-3 accent-emerald-600"
+                              checked={clientesSelecionadosSet.has(cliente)}
+                              onChange={() => alternarClienteSelecionado(cliente)}
+                            />
+                            <span className="flex w-full items-center justify-between gap-2">
+                              <span className="truncate text-[11px] text-gray-700">{cliente}</span>
+                              <span className="shrink-0 text-[10px] text-emerald-700">
+                                {pedidosPorCliente.get(cliente) ?? 0} pedido(s)
+                              </span>
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            <div className="relative" ref={dropdownClientesRef}>
-              <button
-                type="button"
-                onClick={() => {
-                  setDropdownClientesAberto((valor) => !valor);
-                  setDropdownPedidosAberto(false);
-                }}
-                className="inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-emerald-700"
-              >
-                <span>{resumoClientesSelecionados}</span>
-                <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
-                  {clientesSelecionadosDetalhe.length}/{clientesDoVeiculo.length}
+                <div className="relative" ref={dropdownPedidosRef}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDropdownPedidosAberto((valor) => !valor);
+                      setDropdownClientesAberto(false);
+                    }}
+                    className="inline-flex items-center gap-1 rounded border border-blue-200 bg-blue-50 px-2 py-1 text-blue-700"
+                  >
+                    <span>{resumoPedidosSelecionados}</span>
+                    <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700">
+                      {pedidosSelecionadosDetalhe.length}/{pedidosDoVeiculo.length}
+                    </span>
+                    <ChevronDown size={12} className={`transition-transform ${dropdownPedidosAberto ? "rotate-180" : ""}`} />
+                  </button>
+                  {dropdownPedidosAberto && (
+                    <div className="absolute left-0 top-[calc(100%+6px)] z-20 w-[320px] rounded border border-blue-200 bg-white shadow-lg">
+                      <div className="flex items-center justify-between border-b border-gray-100 px-2 py-1.5">
+                        <button
+                          type="button"
+                          onClick={() => aplicarFiltroPedidos(pedidosDoVeiculo.map((pedido) => pedido.nPedido))}
+                          className="text-[10px] font-medium text-blue-600 hover:underline"
+                        >
+                          Selecionar todos
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => aplicarFiltroPedidos([])}
+                          className="text-[10px] font-medium text-red-600 hover:underline"
+                        >
+                          Limpar
+                        </button>
+                      </div>
+                      <div className="max-h-52 overflow-y-auto p-1">
+                        {pedidosDoVeiculo.map((pedido) => (
+                          <label
+                            key={pedido.id}
+                            className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-blue-50"
+                          >
+                            <input
+                              type="checkbox"
+                              className="h-3 w-3 accent-blue-600"
+                              checked={pedidosSelecionadosSet.has(pedido.nPedido)}
+                              onChange={() => alternarPedidoSelecionado(pedido.nPedido)}
+                            />
+                            <span className="font-mono text-[10px] text-blue-700">Pedido {pedido.nPedido}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <span className="rounded bg-emerald-50 border border-emerald-200 px-2 py-1 text-emerald-700">
+                  Clientes no mapa: {destinos.length}
                 </span>
-                <ChevronDown size={12} className={`transition-transform ${dropdownClientesAberto ? "rotate-180" : ""}`} />
-              </button>
-              {dropdownClientesAberto && (
-                <div className="absolute left-0 top-[calc(100%+6px)] z-20 w-[320px] rounded border border-emerald-200 bg-white shadow-lg">
-                  <div className="flex items-center justify-between border-b border-gray-100 px-2 py-1.5">
-                    <button
-                      type="button"
-                      onClick={() => aplicarFiltroClientes(clientesDoVeiculo)}
-                      className="text-[10px] font-medium text-emerald-700 hover:underline"
-                    >
-                      Selecionar todos
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => aplicarFiltroClientes([])}
-                      className="text-[10px] font-medium text-red-600 hover:underline"
-                    >
-                      Limpar
-                    </button>
-                  </div>
-                  <div className="max-h-52 overflow-y-auto p-1">
-                    {clientesDoVeiculo.map((cliente) => (
-                      <label
-                        key={cliente}
-                        className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-emerald-50"
-                      >
-                        <input
-                          type="checkbox"
-                          className="h-3 w-3 accent-emerald-600"
-                          checked={clientesSelecionadosSet.has(cliente)}
-                          onChange={() => alternarClienteSelecionado(cliente)}
-                        />
-                        <span className="flex w-full items-center justify-between gap-2">
-                          <span className="truncate text-[11px] text-gray-700">{cliente}</span>
-                          <span className="shrink-0 text-[10px] text-emerald-700">
-                            {pedidosPorCliente.get(cliente) ?? 0} pedido(s)
-                          </span>
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )}
+              </div>
+              <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+                <span className="rounded bg-white border border-slate-200 px-2 py-1 text-[11px] text-slate-700">
+                  Última atualização: <strong className="text-gray-800">{lastUpdateMapa}</strong>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setAutoAtualizarMapa(!autoAtualizarMapa)}
+                  className={`flex items-center gap-1.5 h-7 px-2.5 text-[11px] rounded border transition-colors ${
+                    autoAtualizarMapa
+                      ? "bg-green-50 border-green-400 text-green-700"
+                      : "bg-white border-gray-300 text-gray-600"
+                  }`}
+                >
+                  <span className={`w-2 h-2 rounded-full ${autoAtualizarMapa ? "bg-green-500 animate-pulse" : "bg-gray-300"}`} />
+                  {autoAtualizarMapa ? `AUTO - ${autoCountdownMapa}s` : "OFF"}
+                </button>
+              </div>
             </div>
-            <span className="rounded bg-cyan-50 border border-cyan-200 px-2 py-1 font-medium text-cyan-700">
-              Operação: {veiculo.operacao}
-            </span>
-            <span className="rounded bg-slate-50 border border-slate-200 px-2 py-1 text-slate-700">
-              {infoRotaAtual}
-            </span>
-            <span className="rounded bg-emerald-50 border border-emerald-200 px-2 py-1 text-emerald-700">
-              Clientes no mapa: {destinos.length}
-            </span>
-            <button
-              type="button"
-              onClick={centralizarMapaNoVeiculo}
-              className="rounded bg-slate-50 border border-slate-200 px-2 py-1 text-slate-700 hover:bg-slate-100 cursor-pointer"
-              title="Centralizar mapa na posição atual do veículo"
-            >
-              Posição atual: {veiculo.lat.toFixed(6)}, {veiculo.lng.toFixed(6)}
-            </button>
-            {posicaoVeiculo?.endereco && (
+
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded bg-slate-50 border border-slate-200 px-2 py-1 text-slate-700">
+                {infoRotaAtual}
+              </span>
+              <span className="rounded bg-slate-50 border border-slate-200 px-2 py-1 text-slate-700">
+                Motorista: <EquipeContatoTooltip nome={veiculo.motorista} />
+              </span>
+              <span className="rounded bg-slate-50 border border-slate-200 px-2 py-1 text-slate-700">
+                Ajudante: <EquipeContatoTooltip nome={veiculo.ajudante} />
+              </span>
               <button
                 type="button"
                 onClick={centralizarMapaNoVeiculo}
                 className="rounded bg-slate-50 border border-slate-200 px-2 py-1 text-slate-700 hover:bg-slate-100 cursor-pointer"
                 title="Centralizar mapa na posição atual do veículo"
               >
-                Endereço atual: {posicaoVeiculo.endereco}
+                Posição atual: {veiculo.lat.toFixed(6)}, {veiculo.lng.toFixed(6)}
               </button>
-            )}
-            <span className="rounded bg-slate-50 border border-slate-200 px-2 py-1 text-slate-700">
-              Motorista: <EquipeContatoTooltip nome={veiculo.motorista} />
-            </span>
-            <span className="rounded bg-slate-50 border border-slate-200 px-2 py-1 text-slate-700">
-              Ajudante: <EquipeContatoTooltip nome={veiculo.ajudante} />
-            </span>
-            {origem && (
+              {posicaoVeiculo?.endereco && (
+                <button
+                  type="button"
+                  onClick={centralizarMapaNoVeiculo}
+                  className="rounded bg-slate-50 border border-slate-200 px-2 py-1 text-slate-700 hover:bg-slate-100 cursor-pointer"
+                  title="Centralizar mapa na posição atual do veículo"
+                >
+                  Endereço atual: {posicaoVeiculo.endereco}
+                </button>
+              )}
               <button
                 type="button"
-                onClick={() => {
-                  const latOrigem = Number(origem.latitude);
-                  const lngOrigem = Number(origem.longitude);
-                  if (!Number.isFinite(latOrigem) || !Number.isFinite(lngOrigem)) return;
-                  setCenterTargetMapa({ lat: latOrigem, lng: lngOrigem });
-                  setRecenterVehicleRequest((anterior) => anterior + 1);
-                }}
-                className="rounded bg-indigo-50 border border-indigo-200 px-2 py-1 text-indigo-700 hover:bg-indigo-100 cursor-pointer"
-                title="Centralizar mapa no ponto de origem"
+                onClick={handleAtualizarMapa}
+                className="flex items-center gap-1.5 h-7 px-2.5 text-[11px] rounded border border-blue-400 text-blue-700 hover:bg-blue-50 transition-colors"
               >
-                Origem: {origem.nome}
+                <RefreshCw size={12} />
+                Atualizar
               </button>
-            )}
-            <span className="rounded bg-white border border-slate-200 px-2 py-1 text-[11px] text-slate-700">
-              Última atualização: <strong className="text-gray-800">{lastUpdateMapa}</strong>
-            </span>
-            <button
-              type="button"
-              onClick={() => setAutoAtualizarMapa(!autoAtualizarMapa)}
-              className={`flex items-center gap-1.5 h-7 px-2.5 text-[11px] rounded border transition-colors ${
-                autoAtualizarMapa
-                  ? "bg-green-50 border-green-400 text-green-700"
-                  : "bg-white border-gray-300 text-gray-600"
-              }`}
-            >
-              <span className={`w-2 h-2 rounded-full ${autoAtualizarMapa ? "bg-green-500 animate-pulse" : "bg-gray-300"}`} />
-              {autoAtualizarMapa ? `AUTO - ${autoCountdownMapa}s` : "OFF"}
-            </button>
-            <button
-              type="button"
-              onClick={handleAtualizarMapa}
-              className="flex items-center gap-1.5 h-7 px-2.5 text-[11px] rounded border border-blue-400 text-blue-700 hover:bg-blue-50 transition-colors"
-            >
-              <RefreshCw size={12} />
-              Atualizar
-            </button>
+            </div>
           </div>
 
           <StreetMapMock
