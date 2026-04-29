@@ -1660,6 +1660,9 @@ function ModalMapaVeiculoInner({
                 </div>
               )}
             </div>
+            <span className="rounded bg-cyan-50 border border-cyan-200 px-2 py-1 font-medium text-cyan-700">
+              Operação: {veiculo.operacao}
+            </span>
             <span className="rounded bg-slate-50 border border-slate-200 px-2 py-1 text-slate-700">
               {infoRotaAtual}
             </span>
