@@ -175,14 +175,14 @@ function AbasPedido({ pedido, filtroStatus }: { pedido: Pedido; filtroStatus?: S
           <thead className="bg-gray-50">
             <tr>
               <th className="px-3 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">#</th>
-              {["Tipo", "Motivo", "Criação", "Usuário", "Status", "TRATAMENTO", "FOTO"].map((h) => (
+              {["Tipo", "Motivo", "Qtd.", "Criação", "Usuário", "Status", "TRATAMENTO", "FOTO"].map((h) => (
                 <th key={h} className="px-3 py-1.5 text-left text-[10px] font-semibold text-gray-600 uppercase">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {pedido.ressalvas.length === 0 ? (
-              <tr><td colSpan={8} className="px-3 py-4 text-center text-gray-400 text-xs">Nenhuma ressalva</td></tr>
+              <tr><td colSpan={9} className="px-3 py-4 text-center text-gray-400 text-xs">Nenhuma ressalva</td></tr>
             ) : pedido.ressalvas.map((r, index) => (
               <tr key={r.id} className="border-t border-gray-100 hover:bg-gray-50">
                 <td className="px-3 py-1.5 text-gray-500">{index + 1}</td>
@@ -200,6 +200,13 @@ function AbasPedido({ pedido, filtroStatus }: { pedido: Pedido; filtroStatus?: S
                   )}
                 </td>
                 <td className="px-3 py-1.5">{r.descricao}</td>
+                <td className="px-3 py-1.5">
+                  {pedido.tipoRessalva === "No Item" && r.quantidade !== undefined ? (
+                    <span className="font-medium text-red-600">{r.quantidade}</span>
+                  ) : (
+                    <span className="text-gray-300">--</span>
+                  )}
+                </td>
                 <td className="px-3 py-1.5">{r.dataHora}</td>
                 <td className="px-3 py-1.5">{r.usuario}</td>
                 <td className="px-3 py-1.5">

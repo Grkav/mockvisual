@@ -60,6 +60,7 @@ export interface Ressalva {
   dataHoraTratamento?: string;
   temFoto: boolean;
   arquivoFoto?: string;
+  quantidade?: number;
 }
 
 export interface ValidacaoOperacional {
@@ -276,7 +277,7 @@ function makeComprovantes(pedidoId: string, tem: boolean): Comprovante[] {
   ];
 }
 
-function makeRessalvas(pedidoId: string, tipo: TipoRessalva): Ressalva[] {
+function makeRessalvas(pedidoId: string, tipo: TipoRessalva, qtdItensAfetados?: number): Ressalva[] {
   if (!tipo) return [];
   const fotosPorPedido: Record<string, boolean> = {
     P003: false,
@@ -301,6 +302,7 @@ function makeRessalvas(pedidoId: string, tipo: TipoRessalva): Ressalva[] {
       dataHoraTratamento,
       temFoto,
       arquivoFoto: temFoto ? `foto_ressalva_${pedidoId}.jpg` : undefined,
+      quantidade: tipo === "No Item" ? qtdItensAfetados : undefined,
     },
   ];
 }
@@ -328,13 +330,17 @@ const PEDIDOS_DATA: Omit<Pedido, "volumes" | "itens" | "comprovantes" | "ressalv
   { id: "P018", nPedido: "PED-018", nRemessa: "REM-0018", operacao: "SP-Capital", cliente: "Atacado Norte", rota: "ROTA-018", tipoServico: "ENTREGA", dataAgendada: "25/03/2025", volumeEmbarcado: "3/4", qtdVolumes: 3, qtdVolumesTotal: 4, peso: 210.0, cubagem: 1.0, valorTotal: 2950.00, status: "Parcialmente Embarcado", prioridade: "B", placa: "STU-3344", motorista: "Lucas Ferreira", ajudante: "Caio Ramos", comComprovante: false, tipoRessalva: null, nomeTarefa: "TASK-008", validacao: { entregaRoterizada: true, volumeEmbarcadoVal: true, registroEntrega: false, chegadaSaidaInformada: true, ordemRoteirizacao: true, rotaFinalizada: false, pedidoNaoProgramado: false } },
 ];
 
-export const PEDIDOS: Pedido[] = PEDIDOS_DATA.map((p) => ({
-  ...p,
-  volumes: makeVolumes(p.id, p.qtdVolumesTotal, p.nomeTarefa, p.qtdVolumes),
-  itens: makeItens(p.id, p.tipoRessalva, p.status),
-  comprovantes: makeComprovantes(p.id, p.comComprovante),
-  ressalvas: makeRessalvas(p.id, p.tipoRessalva),
-}));
+export const PEDIDOS: Pedido[] = PEDIDOS_DATA.map((p) => {
+  const itens = makeItens(p.id, p.tipoRessalva, p.status);
+  const qtdItensAfetados = itens.reduce((s, i) => s + i.qtdRessalva, 0);
+  return {
+    ...p,
+    volumes: makeVolumes(p.id, p.qtdVolumesTotal, p.nomeTarefa, p.qtdVolumes),
+    itens,
+    comprovantes: makeComprovantes(p.id, p.comComprovante),
+    ressalvas: makeRessalvas(p.id, p.tipoRessalva, qtdItensAfetados),
+  };
+});
 
 // ─── Veículos ────────────────────────────────────────────────────────────────
 
